@@ -1,0 +1,113 @@
+---
+// Página interna de referencia — no enlazada en el navbar. Criterio de "listo"
+// del paso 0 de PLAN.md: probar chip, botón y tarjeta usando solo clases del
+// sistema (tokens de DESIGN.md §3/§4/§5), y sirve de consulta para no
+// reinventar valores en las próximas secciones.
+//
+// Los nombres de clase completos ("bg-red", "text-cream"...) se listan como
+// literales completos a propósito: el escáner estático de Tailwind solo
+// detecta clases que aparecen como texto completo en el código fuente, no
+// las que se arman por interpolación (`bg-${token}`) — eso hace que pode del
+// build cualquier color que solo se referencie así.
+import Layout from '../layouts/Layout.astro';
+
+const swatches = [
+	{ label: 'red', bg: 'bg-red', text: 'text-cream' },
+	{ label: 'blue', bg: 'bg-blue', text: 'text-cream' },
+	{ label: 'purple', bg: 'bg-purple', text: 'text-cream' },
+	{ label: 'lime', bg: 'bg-lime', text: 'text-ink' },
+	{ label: 'orange', bg: 'bg-orange', text: 'text-ink' },
+	{ label: 'green', bg: 'bg-green', text: 'text-cream' },
+	{ label: 'cream', bg: 'bg-cream', text: 'text-ink' },
+	{ label: 'ink', bg: 'bg-ink', text: 'text-cream' },
+];
+
+const cards = [
+	{ name: 'red', bg: 'bg-red', text: 'text-cream' },
+	{ name: 'blue', bg: 'bg-blue', text: 'text-cream' },
+	{ name: 'purple', bg: 'bg-purple', text: 'text-cream' },
+	{ name: 'lime', bg: 'bg-lime', text: 'text-ink' },
+	{ name: 'orange', bg: 'bg-orange', text: 'text-ink' },
+];
+---
+
+<Layout title="Style guide — Juveland (interno)">
+	<main class="mx-auto flex max-w-5xl flex-col gap-xl px-sm py-xl">
+		<header class="flex flex-col gap-xs">
+			<p class="font-headline text-sm font-bold tracking-wide text-red uppercase">Interno · no público</p>
+			<h1 class="font-display text-4xl font-bold text-ink">Fundamentos globales</h1>
+			<p class="max-w-prose font-body text-ink/80">
+				Referencia viva de los tokens definidos en <code>src/styles/global.css</code> a partir de DESIGN.md §2–§5.
+			</p>
+		</header>
+
+		<section class="flex flex-col gap-sm">
+			<h2 class="font-headline text-xl font-bold text-ink uppercase">Colores</h2>
+			<div class="grid grid-cols-2 gap-sm sm:grid-cols-4">
+				{
+					swatches.map((s) => (
+						<div class={`ink-outline flex flex-col gap-2 rounded-card p-sm ${s.bg}`}>
+							<span class={`font-headline text-sm font-bold uppercase ${s.text}`}>{s.label}</span>
+						</div>
+					))
+				}
+			</div>
+		</section>
+
+		<section class="flex flex-col gap-sm">
+			<h2 class="font-headline text-xl font-bold text-ink uppercase">Tipografía</h2>
+			<div class="ink-outline sticker-shadow flex flex-col gap-md rounded-card bg-cream p-md">
+				<p class="font-display text-4xl font-bold text-ink">Fredoka — display</p>
+				<p class="font-headline text-2xl font-bold text-ink uppercase">Baloo 2 — headline</p>
+				<p class="max-w-prose font-body text-base text-ink">
+					Nunito — body. Párrafos, formulario, footer, texto largo. Se mantiene legible a 14–16px en celular incluso en
+					conexiones lentas, gracias a que las tres familias se autohospedan con la Fonts API de Astro.
+				</p>
+			</div>
+		</section>
+
+		<section class="flex flex-col gap-sm">
+			<h2 class="font-headline text-xl font-bold text-ink uppercase">Chip</h2>
+			<div class="flex flex-wrap gap-sm">
+				<span class="ink-outline sticker-shadow-sm rounded-chip bg-lime px-md py-2 font-headline text-sm font-bold text-ink uppercase">
+					Sáb 29
+				</span>
+				<span class="ink-outline sticker-shadow-sm rounded-chip bg-green px-md py-2 font-headline text-sm font-bold text-cream uppercase">
+					Entrada libre
+				</span>
+			</div>
+		</section>
+
+		<section class="flex flex-col gap-sm">
+			<h2 class="font-headline text-xl font-bold text-ink uppercase">Botón</h2>
+			<div class="flex flex-wrap items-center gap-sm">
+				<button
+					type="button"
+					class="ink-outline sticker-shadow rounded-chip bg-red px-lg py-3 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					Regístrate
+				</button>
+				<button
+					type="button"
+					class="ink-outline sticker-shadow rounded-chip bg-orange px-lg py-3 font-headline text-sm font-bold text-ink uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					Ver mapa
+				</button>
+			</div>
+		</section>
+
+		<section class="flex flex-col gap-sm">
+			<h2 class="font-headline text-xl font-bold text-ink uppercase">Tarjeta</h2>
+			<div class="grid grid-cols-1 gap-sm sm:grid-cols-3">
+				{
+					cards.map((c) => (
+						<div class={`ink-outline sticker-shadow flex flex-col gap-2 rounded-card p-md ${c.bg}`}>
+							<p class={`font-headline text-lg font-bold uppercase ${c.text}`}>Banda placeholder</p>
+							<p class={`font-body text-sm ${c.text}`}>Horario por confirmar</p>
+						</div>
+					))
+				}
+			</div>
+		</section>
+	</main>
+</Layout>

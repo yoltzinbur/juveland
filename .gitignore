@@ -26,6 +26,8 @@ pnpm-debug.log*
 # claude
 CLAUDE.md
 .claude
+AGENTS.md
+PLAN.md
 
 # impeccable 
 DESIGN.md
