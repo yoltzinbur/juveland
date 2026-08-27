@@ -1,0 +1,53 @@
+---
+// Íconos de línea para Social.astro — mismo criterio que ChipIcon.astro:
+// trazo simple porque el contorno "ink" grueso ya lo aporta el círculo de
+// fondo. `stroke="currentColor"` en vez de una clase `stroke-*`: el color se
+// hereda de `class` (text-cream/text-ink) que pasa el caller, así no hace
+// falta duplicar la lógica de contraste en dos lugares.
+interface Props {
+	name: 'instagram' | 'facebook';
+	class?: string;
+}
+
+const { name, class: className = '' } = Astro.props;
+---
+
+{
+	name === 'instagram' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<rect x="3" y="3" width="18" height="18" rx="5" />
+			<circle cx="12" cy="12" r="4" />
+			<circle cx="17.5" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+		</svg>
+	)
+}
+{
+	name === 'facebook' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<rect x="3" y="3" width="18" height="18" rx="5" />
+			<path
+				d="M14 8.5h-1.5A1.5 1.5 0 0 0 11 10v2H9v3h2v4h3v-4h2l.4-3H14v-1.5c0-.4.3-.5.6-.5H14V8.5Z"
+				fill="currentColor"
+				stroke="none"
+			/>
+		</svg>
+	)
+}

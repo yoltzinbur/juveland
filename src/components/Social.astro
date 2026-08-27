@@ -1,0 +1,82 @@
+---
+// Síguenos — PLAN.md Pasada 1, paso 9 / DESIGN.md §6.
+// DESIGN.md ofrecía dos caminos: tira de posts reales de Instagram (requiere
+// API) o, si no da tiempo, tarjetas estáticas + botón de síguenos. Con las 4
+// cuentas reales que mandó el usuario (2 IMJUVE, 2 Jilotepec/Turismo) se
+// construye la segunda opción — enlaces reales y honestos, sin inventar
+// capturas de posts que no tenemos ni fabricar contenido de esas cuentas.
+import SocialIcon from './SocialIcon.astro';
+
+const accounts = [
+	{
+		platform: 'instagram' as const,
+		platformLabel: 'Instagram',
+		name: 'IMJUVE Jilotepec',
+		handle: '@imjuvejilo',
+		href: 'https://www.instagram.com/imjuvejilo/',
+		bg: 'bg-red',
+		text: 'text-cream',
+	},
+	{
+		platform: 'facebook' as const,
+		platformLabel: 'Facebook',
+		name: 'IMJUVE Jilotepec',
+		handle: 'Imjuve de Jilotepec',
+		href: 'https://www.facebook.com/p/Imjuve-de-Jilotepec-100027352226162/',
+		bg: 'bg-purple',
+		text: 'text-cream',
+	},
+	{
+		platform: 'facebook' as const,
+		platformLabel: 'Facebook',
+		name: 'Turismo Jilotepec',
+		handle: '@TurismoJilo',
+		href: 'https://www.facebook.com/TurismoJilo/',
+		bg: 'bg-blue',
+		text: 'text-ink',
+	},
+	{
+		platform: 'instagram' as const,
+		platformLabel: 'Instagram',
+		name: 'Jilotepec Pueblo Mágico',
+		handle: '@jilo.pueblo.magico',
+		href: 'https://www.instagram.com/jilo.pueblo.magico/',
+		bg: 'bg-green',
+		text: 'text-ink',
+	},
+];
+---
+
+<section class="px-sm py-xl">
+	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-3xl">
+		<div class="flex flex-col items-center gap-2">
+			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Síguenos</h2>
+			<p class="font-body text-ink/70 lg:text-lg">No te pierdas nada de Juveland, IMJUVE y Jilotepec.</p>
+		</div>
+
+		<div class="grid w-full grid-cols-1 gap-sm sm:grid-cols-2">
+			{
+				accounts.map((account) => (
+					<a
+						href={account.href}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="ink-outline sticker-shadow-sm flex items-center gap-sm rounded-card bg-cream px-md py-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-lg lg:py-md"
+					>
+						<span
+							class={`ink-outline flex h-12 w-12 shrink-0 items-center justify-center rounded-full lg:h-14 lg:w-14 ${account.bg}`}
+						>
+							<SocialIcon name={account.platform} class={`h-6 w-6 lg:h-7 lg:w-7 ${account.text}`} />
+						</span>
+						<span class="flex flex-col text-left">
+							<span class="font-headline text-sm font-bold text-ink uppercase lg:text-base">{account.name}</span>
+							<span class="font-body text-xs text-ink/60 lg:text-sm">
+								{account.platformLabel} · {account.handle}
+							</span>
+						</span>
+					</a>
+				))
+			}
+		</div>
+	</div>
+</section>

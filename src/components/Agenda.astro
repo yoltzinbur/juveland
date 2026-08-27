@@ -2,15 +2,8 @@
 // Cuenta regresiva + agenda rápida — PLAN.md Pasada 1, paso 7 / DESIGN.md §6.
 // La agenda oficial ya llegó (line-up de IMJUVE, 9 bandas/horarios) — ya no
 // hace falta el placeholder "Horario por confirmar" que preveía PLAN.md.
-// Colores por tarjeta: se mapean 1:1 contra el gráfico oficial de line-up
-// (rota red/blue/purple/green/lime, igual que dice PLAN.md), con el
-// "amarillo" del gráfico resuelto a `lime` — es la 5ª tinta que el propio
-// PLAN.md ya designó para esta rotación, no una tinta nueva inventada.
-//
-// Contraste de texto por tarjeta: no es la regla genérica de DESIGN.md §3
-// ("texto sobre blue va en cream") porque, medido (WCAG), `ink` da mejor
-// contraste sobre `blue` que `cream` — mismo criterio ya aplicado en
-// Chips.astro.
+// Datos y colores en src/data/lineup.ts — compartidos con Bandas.astro (paso
+// 8) para que cada banda se vea con la misma tinta en las dos secciones.
 //
 // El countdown es en vivo (PLAN.md permite "estático... o con ella si es
 // rápido") — un solo setInterval de 1s sin animación, así que no compite con
@@ -18,17 +11,7 @@
 // más adelante. Hora objetivo fija en -06:00 (Zona Centro de México, sin
 // horario de verano desde 2022) para no depender de la zona horaria del
 // visitante.
-const items = [
-	{ time: '14:00', name: 'Valentino', bg: 'bg-red', text: 'text-cream' },
-	{ time: '15:00', name: 'The Rocktor Band', bg: 'bg-blue', text: 'text-ink' },
-	{ time: '16:00', name: 'Marty BD', bg: 'bg-purple', text: 'text-cream' },
-	{ time: '17:00', name: 'Los Corvett Latin Ska', bg: 'bg-green', text: 'text-ink' },
-	{ time: '18:00', name: 'La Frecuenxia', bg: 'bg-lime', text: 'text-ink' },
-	{ time: '19:00', name: 'Rapsodia', bg: 'bg-red', text: 'text-cream' },
-	{ time: '20:00', name: 'Dopamina', bg: 'bg-blue', text: 'text-ink' },
-	{ time: '21:00', name: 'Horus', bg: 'bg-purple', text: 'text-cream' },
-	{ time: '22:00', name: 'The Sinners', bg: 'bg-lime', text: 'text-ink' },
-];
+import { lineup } from '../data/lineup';
 ---
 
 <section id="agenda" class="px-sm py-xl">
@@ -67,7 +50,7 @@ const items = [
 
 		<div class="flex w-full flex-col gap-sm">
 			{
-				items.map((item) => (
+				lineup.map((item) => (
 					<div class={`ink-outline sticker-shadow-sm relative flex overflow-hidden rounded-card ${item.bg}`}>
 						<div class="relative flex w-20 shrink-0 items-center justify-center border-r-2 border-dashed border-ink py-sm sm:w-24 lg:w-28">
 							<span class={`font-headline text-lg font-extrabold tabular-nums sm:text-xl lg:text-2xl ${item.text}`}>{item.time}</span>
