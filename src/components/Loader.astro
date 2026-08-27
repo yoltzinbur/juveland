@@ -18,16 +18,16 @@
 // forzando throttling. `MIN_VISIBLE_MS` garantiza que se quede en pantalla
 // al menos ese tiempo sin importar qué tan rápido termine de cargar todo.
 //
-// Antes se saltaba por completo en visitas repetidas (flag en localStorage).
-// Se quitó ese salto: el Hero divide "JUVELAND" en letras con SplitText en
-// cuanto las fuentes terminan de cargar (`document.fonts.ready`), y si el
-// loader ya se había quitado para entonces, el usuario alcanza a ver el
-// título completo un instante antes de que se rompa en letras sueltas para
-// volver a armarse — el parpadeo que se quería evitar. Ahora `hide()` espera
-// también a `document.fonts.ready`, no solo a que cargue la página, así que
-// ese parpadeo no puede ocurrir sin acoplar este script a Hero.astro. Las
-// visitas repetidas siguen siendo más rápidas (mínimo más corto) porque no
-// hace falta "presentar" el logo otra vez.
+// El Hero estampa "JUVELAND" letra por letra con SplitText, pero este overlay
+// (z-[100], pantalla completa) lo tapa mientras está visible — así que si esa
+// animación corre antes de tiempo, pasa entera detrás del cream y el usuario
+// nunca la ve (el bug de "las letras ya no animan": no viene de Hero.astro,
+// viene de este timing). Para evitarlo, `hide()` emite el evento
+// `juveland:loader-hidden` (y deja `data-hidden="true"` en el nodo, por si
+// Hero llega a escuchar tarde) justo al empezar a desvanecerse, y Hero.astro
+// espera esa señal —además de `document.fonts.ready`— antes de dividir el
+// título. Antes el loader se saltaba en visitas repetidas (flag en
+// localStorage); ahora no se salta, solo se acorta (`MIN_VISIBLE_MS`).
 //
 // `loading="eager"` en los dos logos: son lo primero que se ve (antes que
 // cualquier otra cosa de la página), así que el `loading="lazy"` por
@@ -122,6 +122,14 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 			window.setTimeout(() => {
 				crossfade?.kill();
 				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+				// Señal para Hero.astro: recién ahora que el overlay empieza a irse
+				// tiene sentido que "JUVELAND" se estampe letra por letra — mientras
+				// este overlay cream lo tapaba, la animación pasaba entera sin que
+				// nadie la viera. El flag en dataset cubre el caso de que Hero
+				// adjunte su listener después de este dispatch.
+				loader.dataset.hidden = 'true';
+				window.dispatchEvent(new CustomEvent('juveland:loader-hidden'));
 
 				gsap.to(loader, {
 					opacity: 0,

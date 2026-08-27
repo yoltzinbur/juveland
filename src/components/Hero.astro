@@ -158,11 +158,30 @@ import mascotaMostaza from '../assets/mascota-mostaza.png';
 			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
 			// --- JUVELAND: cada letra entra por separado, "estampándose" -------
-			// Se espera a que las fuentes carguen antes de dividir: si se separa
-			// en letras con la fuente de reemplazo todavía puesta, el ancho de
-			// cada letra cambia al llegar Fredoka y el spacing/kerning queda mal.
+			// Dos condiciones antes de dividir y animar:
+			//  1. Fuentes cargadas: si se separa en letras con la fuente de
+			//     reemplazo todavía puesta, el ancho de cada letra cambia al
+			//     llegar Fredoka y el spacing/kerning queda mal.
+			//  2. Loader ya retirado: su overlay vive en z-[100] tapando el Hero
+			//     ~1.3s. Si el estampado corre antes, pasa entero detrás de ese
+			//     overlay cream y nadie lo ve (el bug de "ya no animan" — no
+			//     nace de este archivo sino del timing del Loader). `loaderGone`
+			//     resuelve de inmediato si no hay loader o si ya se ocultó; si
+			//     está, el Loader emite `juveland:loader-hidden` al empezar a
+			//     desvanecerse.
 			if (title) {
-				document.fonts.ready.then(() => {
+				const loaderEl = document.getElementById('loader');
+				const loaderGone =
+					!loaderEl || loaderEl.dataset.hidden === 'true'
+						? Promise.resolve()
+						: new Promise<void>((resolve) => {
+								window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
+								// Salvavidas: si el script del Loader falla antes de
+								// emitir el evento, no dejar "JUVELAND" invisible.
+								window.setTimeout(resolve, 4500);
+							});
+
+				Promise.all([document.fonts.ready, loaderGone]).then(() => {
 					const split = SplitText.create(title, { type: 'chars' });
 
 					if (reduceMotion) {

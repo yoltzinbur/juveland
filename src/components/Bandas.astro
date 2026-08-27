@@ -1,10 +1,15 @@
 ---
 // Bandas — PLAN.md Pasada 1, paso 8 / DESIGN.md §6.
-// Grilla estática por ahora — el carrusel horizontal infinito es la decisión
-// ya tomada para más adelante (DESIGN.md §6/§9), pero se prueba en Pasada 2
-// tras medir rendimiento real en dispositivos, no se compromete de una vez
-// (mismo criterio que ya usa PLAN.md paso 8: "carrusel... se decide/prueba
-// en pasada 2 tras medir rendimiento real").
+// Grilla estática — en Pasada 2 se evaluó el carrusel infinito arrastrable
+// (Draggable+InertiaPlugin+loop sin fin, como el demo de referencia de
+// GSAP/ScrollTrigger) contra quedarse con la grilla, y se decidió quedarse:
+// con 9 bandas ya caben todas a la vista sin esconder ninguna detrás de un
+// swipe, pesa menos en celulares medianos (la prioridad #1 del sitio), y no
+// suma la complejidad de accesibilidad de un carrusel arrastrable a dos días
+// del evento. PLAN.md paso 8 ya preveía esta salida ("si se cayó a grilla
+// estática por rendimiento, solo fade+rise") — aquí se usa el abanico
+// (rotación + offset) en vez de un fade+rise plano, para no perder del todo
+// el espíritu "mazo de cartas" que sí tenía el carrusel.
 //
 // Banda `bg-ink` de página completa (no otro color de la paleta): las 9
 // tarjetas ya son 5 tintas saturadas compitiendo entre sí, así que envolverlas
@@ -45,7 +50,7 @@ import { lineup } from '../data/lineup';
 
 	<div class="bg-ink px-sm pt-lg pb-xl">
 		<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
-			<div class="flex flex-col items-center gap-2">
+			<div class="bandas-heading flex flex-col items-center gap-2">
 				<h2 class="font-headline text-2xl font-bold text-cream uppercase sm:text-3xl lg:text-4xl">Line-up</h2>
 				<p class="font-body text-cream/70 lg:text-lg">Nuestros artistas invitados al evento.</p>
 			</div>
@@ -54,7 +59,7 @@ import { lineup } from '../data/lineup';
 				{
 					lineup.map((item) => (
 						<div
-							class={`cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}
+							class={`banda-card cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}
 						>
 							<div class="flex aspect-square flex-col items-center justify-center gap-1 border-b-2 border-ink/15">
 								<svg
@@ -91,3 +96,68 @@ import { lineup } from '../data/lineup';
 		</div>
 	</div>
 </section>
+
+<script>
+	// Pasada 2 (PLAN.md) — abanico (rotación + offset que se acomoda) en vez
+	// de un fade+rise plano, para conservar algo del espíritu "mazo de
+	// cartas" de la opción de carrusel que se descartó (ver comentario de
+	// arriba). Aislado en su propia isla de Astro.
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const section = document.querySelector<HTMLElement>('#bandas');
+	const heading = section?.querySelector<HTMLElement>('.bandas-heading');
+	const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.banda-card')) : [];
+
+	// Mismo patrón que el resto de las secciones: dos condiciones mutuamente
+	// excluyentes que cubren el 100% de los casos.
+	gsap.matchMedia().add(
+		{
+			reduceMotion: '(prefers-reduced-motion: reduce)',
+			motionOk: '(prefers-reduced-motion: no-preference)',
+		},
+		(context) => {
+			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+			if (!section) return;
+
+			const tl = gsap.timeline({
+				scrollTrigger: {
+					trigger: section,
+					start: 'top 78%',
+					toggleActions: 'play none none reverse',
+				},
+			});
+
+			if (heading) {
+				tl.from(heading, {
+					opacity: 0,
+					y: reduceMotion ? 0 : 16,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+				});
+			}
+
+			if (cards.length) {
+				// Alterna la rotación de entrada (izquierda/derecha) tarjeta por
+				// tarjeta, como si se repartieran de un mazo — `back.out` para que
+				// se sientan "acomodándose" al llegar, no solo deteniéndose.
+				tl.from(
+					cards,
+					{
+						opacity: 0,
+						y: reduceMotion ? 0 : 30,
+						scale: reduceMotion ? 1 : 0.8,
+						rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
+						duration: reduceMotion ? 0.3 : 0.6,
+						ease: 'back.out(1.6)',
+						stagger: reduceMotion ? 0 : 0.08,
+					},
+					reduceMotion ? undefined : '-=0.25',
+				);
+			}
+		},
+	);
+</script>
