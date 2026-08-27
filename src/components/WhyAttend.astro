@@ -59,77 +59,101 @@ const reasons = [
 	// golpe — de ahí el stagger más largo que en Chips.astro (ahí eran 5
 	// círculos chicos entrando casi juntos; aquí son pasos que se quieren
 	// leer en secuencia).
-	import { gsap } from 'gsap';
-	import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-	gsap.registerPlugin(ScrollTrigger);
-
+	//
+	// Afinación de rendimiento (mismo criterio que Chips/Agenda/Bandas): GSAP +
+	// ScrollTrigger ya NO se importan estático — esta sección está bajo el
+	// pliegue, así que GSAP entra con import() dinámico recién cuando se acerca
+	// al viewport (IntersectionObserver, rootMargin 200px). El chunk de GSAP ya
+	// lo trae Hero/Navbar de forma estática, así que el import() resuelve desde
+	// caché; lo que se difiere es el trabajo, no la descarga.
 	const section = document.querySelector<HTMLElement>('#por-que-venir');
-	const heading = section?.querySelector<HTMLElement>('.why-heading');
-	const items = section ? Array.from(section.querySelectorAll<HTMLElement>('.reason-item')) : [];
-	const checks = section ? Array.from(section.querySelectorAll<HTMLElement>('.reason-check')) : [];
 
-	// Mismo patrón que Navbar/Hero/Chips: dos condiciones mutuamente
-	// excluyentes que cubren el 100% de los casos.
-	gsap.matchMedia().add(
-		{
-			reduceMotion: '(prefers-reduced-motion: reduce)',
-			motionOk: '(prefers-reduced-motion: no-preference)',
-		},
-		(context) => {
-			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+	if (section) {
+		const animate = async () => {
+			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+			]);
+			gsap.registerPlugin(ScrollTrigger);
 
-			if (!section) return;
+			const heading = section.querySelector<HTMLElement>('.why-heading');
+			const items = Array.from(section.querySelectorAll<HTMLElement>('.reason-item'));
+			const checks = Array.from(section.querySelectorAll<HTMLElement>('.reason-check'));
 
-			const tl = gsap.timeline({
-				scrollTrigger: {
-					trigger: section,
-					start: 'top 78%',
-					toggleActions: 'play none none reverse',
+			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
+			gsap.matchMedia().add(
+				{
+					reduceMotion: '(prefers-reduced-motion: reduce)',
+					motionOk: '(prefers-reduced-motion: no-preference)',
 				},
-			});
+				(context) => {
+					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-			if (heading) {
-				tl.from(heading, {
-					opacity: 0,
-					y: reduceMotion ? 0 : 16,
-					duration: reduceMotion ? 0.3 : 0.5,
-					ease: 'power2.out',
-				});
-			}
+					const tl = gsap.timeline({
+						scrollTrigger: {
+							trigger: section,
+							start: 'top 78%',
+							toggleActions: 'play none none reverse',
+						},
+					});
 
-			if (items.length) {
-				// El punto completo (numeral + check + texto) entra como un solo
-				// bloque fade+rise — "el numeral y el check al mismo tiempo" ya sale
-				// gratis al animar el <li> entero en vez de sus partes por separado.
-				tl.from(
-					items,
-					{
-						opacity: 0,
-						y: reduceMotion ? 0 : 20,
-						duration: reduceMotion ? 0.3 : 0.5,
-						ease: 'power2.out',
-						stagger: reduceMotion ? 0 : 0.15,
-					},
-					reduceMotion ? undefined : '-=0.2',
-				);
-			}
+					if (heading) {
+						tl.from(heading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
 
-			// El check, además, se "tica" con un pop propio superpuesto al mismo
-			// instante en que aparece su punto — refuerza la sensación de "listo,
-			// siguiente" en vez de un fade genérico.
-			if (checks.length && !reduceMotion) {
-				tl.from(
-					checks,
-					{
-						scale: 0.4,
-						duration: 0.4,
-						ease: 'back.out(2)',
-						stagger: 0.15,
-					},
-					'<',
-				);
-			}
-		},
-	);
+					if (items.length) {
+						// El punto completo (numeral + check + texto) entra como un solo
+						// bloque fade+rise — "el numeral y el check al mismo tiempo" ya sale
+						// gratis al animar el <li> entero en vez de sus partes por separado.
+						tl.from(
+							items,
+							{
+								opacity: 0,
+								y: reduceMotion ? 0 : 20,
+								duration: reduceMotion ? 0.3 : 0.5,
+								ease: 'power2.out',
+								stagger: reduceMotion ? 0 : 0.15,
+							},
+							reduceMotion ? undefined : '-=0.2',
+						);
+					}
+
+					// El check, además, se "tica" con un pop propio superpuesto al mismo
+					// instante en que aparece su punto — refuerza la sensación de "listo,
+					// siguiente" en vez de un fade genérico.
+					if (checks.length && !reduceMotion) {
+						tl.from(
+							checks,
+							{
+								scale: 0.4,
+								duration: 0.4,
+								ease: 'back.out(2)',
+								stagger: 0.15,
+							},
+							'<',
+						);
+					}
+				},
+			);
+		};
+
+		if ('IntersectionObserver' in window) {
+			const io = new IntersectionObserver(
+				(entries, obs) => {
+					if (!entries.some((entry) => entry.isIntersecting)) return;
+					obs.disconnect();
+					animate();
+				},
+				{ rootMargin: '200px' },
+			);
+			io.observe(section);
+		} else {
+			animate();
+		}
+	}
 </script>

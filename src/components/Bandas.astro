@@ -109,62 +109,89 @@ import { lineup } from '../data/lineup';
 	// de un fade+rise plano, para conservar algo del espíritu "mazo de
 	// cartas" de la opción de carrusel que se descartó (ver comentario de
 	// arriba). Aislado en su propia isla de Astro.
-	import { gsap } from 'gsap';
-	import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-	gsap.registerPlugin(ScrollTrigger);
-
+	//
+	// Afinación de rendimiento (mismo criterio que Chips/WhyAttend/Agenda):
+	// GSAP + ScrollTrigger ya NO se importan estático — esta sección está bajo
+	// el pliegue, así que GSAP entra con import() dinámico recién cuando se
+	// acerca al viewport (IntersectionObserver, rootMargin 200px). El chunk de
+	// GSAP ya lo trae Hero/Navbar de forma estática, así que el import()
+	// resuelve desde caché; lo que se difiere es el trabajo (registerPlugin,
+	// timeline+ScrollTrigger, el immediateRender de los .from() que además
+	// empujaban las tarjetas rotadas fuera del viewport — ver overflow-x-clip
+	// en el <section>), no la descarga.
 	const section = document.querySelector<HTMLElement>('#bandas');
-	const heading = section?.querySelector<HTMLElement>('.bandas-heading');
-	const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.banda-card')) : [];
 
-	// Mismo patrón que el resto de las secciones: dos condiciones mutuamente
-	// excluyentes que cubren el 100% de los casos.
-	gsap.matchMedia().add(
-		{
-			reduceMotion: '(prefers-reduced-motion: reduce)',
-			motionOk: '(prefers-reduced-motion: no-preference)',
-		},
-		(context) => {
-			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+	if (section) {
+		const animate = async () => {
+			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+			]);
+			gsap.registerPlugin(ScrollTrigger);
 
-			if (!section) return;
+			const heading = section.querySelector<HTMLElement>('.bandas-heading');
+			const cards = Array.from(section.querySelectorAll<HTMLElement>('.banda-card'));
 
-			const tl = gsap.timeline({
-				scrollTrigger: {
-					trigger: section,
-					start: 'top 78%',
-					toggleActions: 'play none none reverse',
+			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
+			gsap.matchMedia().add(
+				{
+					reduceMotion: '(prefers-reduced-motion: reduce)',
+					motionOk: '(prefers-reduced-motion: no-preference)',
 				},
-			});
+				(context) => {
+					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-			if (heading) {
-				tl.from(heading, {
-					opacity: 0,
-					y: reduceMotion ? 0 : 16,
-					duration: reduceMotion ? 0.3 : 0.5,
-					ease: 'power2.out',
-				});
-			}
+					const tl = gsap.timeline({
+						scrollTrigger: {
+							trigger: section,
+							start: 'top 78%',
+							toggleActions: 'play none none reverse',
+						},
+					});
 
-			if (cards.length) {
-				// Alterna la rotación de entrada (izquierda/derecha) tarjeta por
-				// tarjeta, como si se repartieran de un mazo — `back.out` para que
-				// se sientan "acomodándose" al llegar, no solo deteniéndose.
-				tl.from(
-					cards,
-					{
-						opacity: 0,
-						y: reduceMotion ? 0 : 30,
-						scale: reduceMotion ? 1 : 0.8,
-						rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
-						duration: reduceMotion ? 0.3 : 0.6,
-						ease: 'back.out(1.6)',
-						stagger: reduceMotion ? 0 : 0.08,
-					},
-					reduceMotion ? undefined : '-=0.25',
-				);
-			}
-		},
-	);
+					if (heading) {
+						tl.from(heading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
+
+					if (cards.length) {
+						// Alterna la rotación de entrada (izquierda/derecha) tarjeta por
+						// tarjeta, como si se repartieran de un mazo — `back.out` para que
+						// se sientan "acomodándose" al llegar, no solo deteniéndose.
+						tl.from(
+							cards,
+							{
+								opacity: 0,
+								y: reduceMotion ? 0 : 30,
+								scale: reduceMotion ? 1 : 0.8,
+								rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
+								duration: reduceMotion ? 0.3 : 0.6,
+								ease: 'back.out(1.6)',
+								stagger: reduceMotion ? 0 : 0.08,
+							},
+							reduceMotion ? undefined : '-=0.25',
+						);
+					}
+				},
+			);
+		};
+
+		if ('IntersectionObserver' in window) {
+			const io = new IntersectionObserver(
+				(entries, obs) => {
+					if (!entries.some((entry) => entry.isIntersecting)) return;
+					obs.disconnect();
+					animate();
+				},
+				{ rootMargin: '200px' },
+			);
+			io.observe(section);
+		} else {
+			animate();
+		}
+	}
 </script>

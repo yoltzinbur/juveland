@@ -57,60 +57,88 @@ const chips = [
 	// El encabezado entra primero como bloque; cada círculo se "estampa" con
 	// un ligero overshoot (back.out) para que se sienta como una tarjeta
 	// sticker aterrizando, no solo un fade plano.
-	import { gsap } from 'gsap';
-	import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-	gsap.registerPlugin(ScrollTrigger);
-
+	//
+	// Afinación de rendimiento: GSAP + ScrollTrigger ya NO se importan de
+	// forma estática aquí. Se cargaban en el primer load junto con las otras
+	// islas y sumaban main-thread / Total Blocking Time en celular mediano sin
+	// que se vieran (esta sección está bajo el pliegue). Ahora GSAP entra con
+	// import() dinámico recién cuando la sección se acerca al viewport
+	// (IntersectionObserver, rootMargin 200px para que llegue lista antes de
+	// verse). El chunk de GSAP ya lo trae Hero/Navbar de forma estática, así
+	// que este import() casi siempre resuelve al instante desde caché — lo que
+	// se difiere es el trabajo (registerPlugin, crear el timeline+ScrollTrigger,
+	// el immediateRender de los .from()), no la descarga.
 	const section = document.querySelector<HTMLElement>('#chips');
-	const heading = section?.querySelector<HTMLElement>('.chips-heading');
-	const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.chip-card')) : [];
 
-	// Mismo patrón que Navbar.astro/Hero.astro: dos condiciones mutuamente
-	// excluyentes que cubren el 100% de los casos, porque con una sola
-	// condición nombrada matchMedia solo invoca el callback cuando ESA media
-	// query da true.
-	gsap.matchMedia().add(
-		{
-			reduceMotion: '(prefers-reduced-motion: reduce)',
-			motionOk: '(prefers-reduced-motion: no-preference)',
-		},
-		(context) => {
-			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+	if (section) {
+		const animate = async () => {
+			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+			]);
+			gsap.registerPlugin(ScrollTrigger);
 
-			if (!section) return;
+			const heading = section.querySelector<HTMLElement>('.chips-heading');
+			const cards = Array.from(section.querySelectorAll<HTMLElement>('.chip-card'));
 
-			const tl = gsap.timeline({
-				scrollTrigger: {
-					trigger: section,
-					start: 'top 82%',
-					toggleActions: 'play none none reverse',
+			// Dos condiciones mutuamente excluyentes que cubren el 100% de los
+			// casos, porque con una sola condición nombrada matchMedia solo
+			// invoca el callback cuando ESA media query da true.
+			gsap.matchMedia().add(
+				{
+					reduceMotion: '(prefers-reduced-motion: reduce)',
+					motionOk: '(prefers-reduced-motion: no-preference)',
 				},
-			});
+				(context) => {
+					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-			if (heading) {
-				tl.from(heading, {
-					opacity: 0,
-					y: reduceMotion ? 0 : 16,
-					duration: reduceMotion ? 0.3 : 0.5,
-					ease: 'power2.out',
-				});
-			}
+					const tl = gsap.timeline({
+						scrollTrigger: {
+							trigger: section,
+							start: 'top 82%',
+							toggleActions: 'play none none reverse',
+						},
+					});
 
-			if (cards.length) {
-				tl.from(
-					cards,
-					{
-						opacity: 0,
-						y: reduceMotion ? 0 : 24,
-						scale: reduceMotion ? 1 : 0.85,
-						duration: reduceMotion ? 0.3 : 0.5,
-						ease: 'back.out(1.7)',
-						stagger: reduceMotion ? 0 : 0.06,
-					},
-					reduceMotion ? undefined : '-=0.25',
-				);
-			}
-		},
-	);
+					if (heading) {
+						tl.from(heading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
+
+					if (cards.length) {
+						tl.from(
+							cards,
+							{
+								opacity: 0,
+								y: reduceMotion ? 0 : 24,
+								scale: reduceMotion ? 1 : 0.85,
+								duration: reduceMotion ? 0.3 : 0.5,
+								ease: 'back.out(1.7)',
+								stagger: reduceMotion ? 0 : 0.06,
+							},
+							reduceMotion ? undefined : '-=0.25',
+						);
+					}
+				},
+			);
+		};
+
+		if ('IntersectionObserver' in window) {
+			const io = new IntersectionObserver(
+				(entries, obs) => {
+					if (!entries.some((entry) => entry.isIntersecting)) return;
+					obs.disconnect();
+					animate();
+				},
+				{ rootMargin: '200px' },
+			);
+			io.observe(section);
+		} else {
+			animate();
+		}
+	}
 </script>

@@ -89,162 +89,191 @@ import { lineup } from '../data/lineup';
 <script>
 	// Pasada 2 (PLAN.md) — fade+rise general para la sección (encabezado,
 	// tarjeta del countdown, subtítulo, tiras de la agenda) + "tick/flip
-	// simple" en los dígitos del countdown (DESIGN.md §7). Aislado en su
-	// propia isla de Astro, GSAP + ScrollTrigger propios de esta sección.
-	import { gsap } from 'gsap';
-	import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-	gsap.registerPlugin(ScrollTrigger);
-
+	// simple" en los dígitos del countdown (DESIGN.md §7).
+	//
+	// Afinación de rendimiento (mismo criterio que Chips/WhyAttend/Bandas):
+	// GSAP + ScrollTrigger ya NO se importan estático. Esta sección está bajo
+	// el pliegue, así que GSAP entra con import() dinámico recién cuando se
+	// acerca al viewport (IntersectionObserver, rootMargin 200px). El chunk de
+	// GSAP ya lo trae Hero/Navbar de forma estática, así que el import()
+	// resuelve desde caché; lo que se difiere es el trabajo, no la descarga.
+	//
+	// El countdown en vivo también arranca aquí dentro: la tarjeta está bajo el
+	// pliegue, así que empezar a tickear recién cuando se acerca es invisible
+	// para el usuario (el primer tick ya pinta la hora correcta, sin flip) y
+	// evita un setInterval corriendo desde el segundo 0 sobre algo que nadie
+	// ve. Además el flip usa gsap, así que igual necesita el import.
 	const section = document.querySelector<HTMLElement>('#agenda');
-	const heading = section?.querySelector<HTMLElement>('.agenda-heading');
-	const countdownCard = section?.querySelector<HTMLElement>('.countdown-card');
-	const subheading = section?.querySelector<HTMLElement>('.agenda-subheading');
-	const agendaItems = section ? Array.from(section.querySelectorAll<HTMLElement>('.agenda-item')) : [];
 
-	// Mismo patrón que Navbar/Hero/Chips/WhyAttend/Loader: dos condiciones
-	// mutuamente excluyentes que cubren el 100% de los casos.
-	gsap.matchMedia().add(
-		{
-			reduceMotion: '(prefers-reduced-motion: reduce)',
-			motionOk: '(prefers-reduced-motion: no-preference)',
-		},
-		(context) => {
-			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+	if (section) {
+		const start = async () => {
+			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+			]);
+			gsap.registerPlugin(ScrollTrigger);
 
-			if (!section) return;
+			const heading = section.querySelector<HTMLElement>('.agenda-heading');
+			const countdownCard = section.querySelector<HTMLElement>('.countdown-card');
+			const subheading = section.querySelector<HTMLElement>('.agenda-subheading');
+			const agendaItems = Array.from(section.querySelectorAll<HTMLElement>('.agenda-item'));
 
-			const tl = gsap.timeline({
-				scrollTrigger: {
-					trigger: section,
-					start: 'top 78%',
-					toggleActions: 'play none none reverse',
+			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
+			gsap.matchMedia().add(
+				{
+					reduceMotion: '(prefers-reduced-motion: reduce)',
+					motionOk: '(prefers-reduced-motion: no-preference)',
 				},
-			});
+				(context) => {
+					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-			if (heading) {
-				tl.from(heading, {
-					opacity: 0,
-					y: reduceMotion ? 0 : 16,
-					duration: reduceMotion ? 0.3 : 0.5,
-					ease: 'power2.out',
-				});
-			}
+					const tl = gsap.timeline({
+						scrollTrigger: {
+							trigger: section,
+							start: 'top 78%',
+							toggleActions: 'play none none reverse',
+						},
+					});
 
-			if (countdownCard) {
-				// Un poco de pop (back.out) en vez de un fade plano — es la pieza
-				// central de la sección, el "tag" con la cuenta regresiva.
-				tl.from(
-					countdownCard,
-					{
-						opacity: 0,
-						y: reduceMotion ? 0 : 20,
-						scale: reduceMotion ? 1 : 0.9,
-						duration: reduceMotion ? 0.3 : 0.5,
-						ease: 'back.out(1.6)',
+					if (heading) {
+						tl.from(heading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
+
+					if (countdownCard) {
+						// Un poco de pop (back.out) en vez de un fade plano — es la pieza
+						// central de la sección, el "tag" con la cuenta regresiva.
+						tl.from(
+							countdownCard,
+							{
+								opacity: 0,
+								y: reduceMotion ? 0 : 20,
+								scale: reduceMotion ? 1 : 0.9,
+								duration: reduceMotion ? 0.3 : 0.5,
+								ease: 'back.out(1.6)',
+							},
+							reduceMotion ? undefined : '-=0.2',
+						);
+					}
+
+					if (subheading) {
+						tl.from(subheading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
+
+					if (agendaItems.length) {
+						// Intercaladas izquierda/derecha (índice par entra desde la
+						// izquierda, impar desde la derecha) en vez del fade+rise vertical
+						// que usan el resto de las secciones — les da su propio ritmo, como
+						// tiras de boleto repartiéndose de un mazo.
+						tl.from(
+							agendaItems,
+							{
+								opacity: 0,
+								x: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -60 : 60),
+								y: 0,
+								duration: reduceMotion ? 0.3 : 0.55,
+								ease: 'power2.out',
+								stagger: reduceMotion ? 0 : 0.08,
+							},
+							reduceMotion ? undefined : '-=0.2',
+						);
+					}
+				},
+			);
+
+			// --- Countdown en vivo, con tick/flip en cada dígito que cambia ------
+			const wrapper = document.getElementById('countdown-numbers');
+			const target = new Date(wrapper?.dataset.target ?? '');
+
+			const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
+			const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
+			const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
+			const seconds = wrapper?.querySelector<HTMLElement>('[data-unit="seconds"]');
+
+			const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
+			gsap.set(digitEls, { transformPerspective: 300 });
+
+			const flipReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+			// El primer render (de "00" al valor real) no lleva flip: si no,
+			// compite con el fade+rise de entrada de arriba, que corre justo
+			// cuando esta tarjeta recién se vuelve visible por primera vez.
+			let isFirstTick = true;
+
+			// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
+			// quedar de canto (invisible un instante), ahí se cambia el texto, y
+			// termina de girar del otro lado — dos giros cortos, no un flip-clock
+			// de dos paneles, pero da la misma sensación de "voltear" sin duplicar
+			// el DOM de cada dígito.
+			const setDigit = (el: HTMLElement | null | undefined, value: string) => {
+				if (!el || el.textContent === value) return;
+
+				if (isFirstTick || flipReduceMotion) {
+					el.textContent = value;
+					return;
+				}
+
+				gsap.to(el, {
+					rotationX: -90,
+					duration: 0.15,
+					ease: 'power1.in',
+					onComplete: () => {
+						el.textContent = value;
+						gsap.fromTo(el, { rotationX: 90 }, { rotationX: 0, duration: 0.15, ease: 'power1.out' });
 					},
-					reduceMotion ? undefined : '-=0.2',
-				);
-			}
-
-			if (subheading) {
-				tl.from(subheading, {
-					opacity: 0,
-					y: reduceMotion ? 0 : 16,
-					duration: reduceMotion ? 0.3 : 0.5,
-					ease: 'power2.out',
 				});
-			}
+			};
 
-			if (agendaItems.length) {
-				// Intercaladas izquierda/derecha (índice par entra desde la
-				// izquierda, impar desde la derecha) en vez del fade+rise vertical
-				// que usan el resto de las secciones — les da su propio ritmo, como
-				// tiras de boleto repartiéndose de un mazo.
-				tl.from(
-					agendaItems,
-					{
-						opacity: 0,
-						x: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -60 : 60),
-						y: 0,
-						duration: reduceMotion ? 0.3 : 0.55,
-						ease: 'power2.out',
-						stagger: reduceMotion ? 0 : 0.08,
-					},
-					reduceMotion ? undefined : '-=0.2',
-				);
-			}
-		},
-	);
+			const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
 
-	// --- Countdown en vivo, con tick/flip en cada dígito que cambia --------
-	const wrapper = document.getElementById('countdown-numbers');
-	const target = new Date(wrapper?.dataset.target ?? '');
+			let intervalId: ReturnType<typeof setInterval> | undefined;
 
-	const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
-	const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
-	const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
-	const seconds = wrapper?.querySelector<HTMLElement>('[data-unit="seconds"]');
+			const tick = () => {
+				const diff = target.getTime() - Date.now();
 
-	const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
-	gsap.set(digitEls, { transformPerspective: 300 });
+				if (diff <= 0) {
+					setDigit(days, '00');
+					setDigit(hours, '00');
+					setDigit(minutes, '00');
+					setDigit(seconds, '00');
+					isFirstTick = false;
+					clearInterval(intervalId);
+					return;
+				}
 
-	const flipReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+				const totalSeconds = Math.floor(diff / 1000);
+				setDigit(days, pad(Math.floor(totalSeconds / 86400)));
+				setDigit(hours, pad(Math.floor((totalSeconds % 86400) / 3600)));
+				setDigit(minutes, pad(Math.floor((totalSeconds % 3600) / 60)));
+				setDigit(seconds, pad(totalSeconds % 60));
+				isFirstTick = false;
+			};
 
-	// El primer render (de "00" al valor real) no lleva flip: si no, compite
-	// con el fade+rise de entrada de arriba, que corre justo cuando esta
-	// tarjeta recién se vuelve visible por primera vez.
-	let isFirstTick = true;
+			tick();
+			intervalId = setInterval(tick, 1000);
+		};
 
-	// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
-	// quedar de canto (invisible un instante), ahí se cambia el texto, y
-	// termina de girar del otro lado — dos giros cortos, no un flip-clock de
-	// dos paneles superpuestos, pero da la misma sensación de "voltear" sin
-	// duplicar el DOM de cada dígito.
-	const setDigit = (el: HTMLElement | null | undefined, value: string) => {
-		if (!el || el.textContent === value) return;
-
-		if (isFirstTick || flipReduceMotion) {
-			el.textContent = value;
-			return;
+		if ('IntersectionObserver' in window) {
+			const io = new IntersectionObserver(
+				(entries, obs) => {
+					if (!entries.some((entry) => entry.isIntersecting)) return;
+					obs.disconnect();
+					start();
+				},
+				{ rootMargin: '200px' },
+			);
+			io.observe(section);
+		} else {
+			start();
 		}
-
-		gsap.to(el, {
-			rotationX: -90,
-			duration: 0.15,
-			ease: 'power1.in',
-			onComplete: () => {
-				el.textContent = value;
-				gsap.fromTo(el, { rotationX: 90 }, { rotationX: 0, duration: 0.15, ease: 'power1.out' });
-			},
-		});
-	};
-
-	const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
-
-	let intervalId: ReturnType<typeof setInterval> | undefined;
-
-	const tick = () => {
-		const diff = target.getTime() - Date.now();
-
-		if (diff <= 0) {
-			setDigit(days, '00');
-			setDigit(hours, '00');
-			setDigit(minutes, '00');
-			setDigit(seconds, '00');
-			isFirstTick = false;
-			clearInterval(intervalId);
-			return;
-		}
-
-		const totalSeconds = Math.floor(diff / 1000);
-		setDigit(days, pad(Math.floor(totalSeconds / 86400)));
-		setDigit(hours, pad(Math.floor((totalSeconds % 86400) / 3600)));
-		setDigit(minutes, pad(Math.floor((totalSeconds % 3600) / 60)));
-		setDigit(seconds, pad(totalSeconds % 60));
-		isFirstTick = false;
-	};
-
-	tick();
-	intervalId = setInterval(tick, 1000);
+	}
 </script>
