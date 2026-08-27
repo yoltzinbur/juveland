@@ -1,15 +1,18 @@
 ---
 import '../styles/global.css';
 import { Font } from 'astro:assets';
+import Loader from '../components/Loader.astro';
 
 interface Props {
 	title?: string;
 	description?: string;
+	showLoader?: boolean;
 }
 
 const {
 	title = 'Juveland — 1er Festival de las Juventudes de Jilotepec',
 	description = 'Sábado 29 de agosto, Jilotepec. Música en vivo, Territorio Emprende y más — organizado por IMJUVE Jilotepec.',
+	showLoader = true,
 } = Astro.props;
 ---
 
@@ -27,6 +30,7 @@ const {
 		<Font cssVariable="--font-fredoka" />
 	</head>
 	<body>
+		{showLoader && <Loader />}
 		<slot />
 	</body>
 </html>

@@ -1,16 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
 ---
 
 <Layout>
 	<Navbar />
 	<main>
-		<!-- [pendiente PLAN.md Pasada 1] Hero, chips, agenda, bandas, etc. van aquí en las próximas sesiones. -->
-		<section id="inicio" class="flex min-h-[150vh] items-start justify-center px-sm pt-xl">
+		<Hero />
+		<!-- [pendiente PLAN.md Pasada 1] Chips de intro, por qué venir, agenda, bandas, etc. van aquí en las próximas sesiones. -->
+		<section class="flex min-h-[60vh] items-start justify-center px-sm pt-xl">
 			<p class="max-w-prose text-center font-body text-ink/60">
-				Próxima sección: Hero (PLAN.md — Pasada 1, paso 2). Este relleno solo existe para probar el navbar sticky
-				mientras se hace scroll.
+				Próxima sección: Chips de intro (PLAN.md — Pasada 1, paso 4).
 			</p>
 		</section>
 	</main>
