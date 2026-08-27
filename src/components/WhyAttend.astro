@@ -1,0 +1,41 @@
+---
+// Por qué venir — PLAN.md Pasada 1, paso 5 / DESIGN.md §6.
+// Tarjeta con 2-3 razones cortas y checkmarks estilo sticker (lime/green) en
+// vez del check amarillo de Alldae. Contenido ya disponible del mensaje de
+// convocatoria — nada pendiente de IMJUVE aquí. La cascada numerada 01→02→03
+// (DESIGN.md §7) es Pasada 2; por ahora es una lista estática.
+const reasons = [
+	{ text: 'Música en vivo todo el día, con bandas y artistas locales.', check: 'bg-lime' },
+	{ text: 'Territorio Emprende: muestra o vende tu proyecto frente a todo Jilotepec.', check: 'bg-green' },
+	{ text: 'Entrada libre — solo trae ganas de pasarla bien.', check: 'bg-lime' },
+];
+---
+
+<section class="px-sm py-xl">
+	<div class="ink-outline sticker-shadow mx-auto flex max-w-2xl flex-col gap-md rounded-card bg-cream p-md sm:p-lg">
+		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl">¿Por qué venir?</h2>
+
+		<ul class="flex flex-col gap-sm">
+			{
+				reasons.map((reason) => (
+					<li class="flex items-start gap-sm">
+						<span
+							class={`ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${reason.check}`}
+						>
+							<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
+								<path
+									d="M3 8.5 6.5 12 13 4"
+									stroke="var(--color-ink)"
+									stroke-width="2.2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</span>
+						<p class="pt-1 font-body text-base text-ink/85 sm:text-lg">{reason.text}</p>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>

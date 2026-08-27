@@ -1,0 +1,167 @@
+---
+// Trueque con Huella — Croquetón — PLAN.md Pasada 1, paso 6 / DESIGN.md §6.
+// Tono deliberadamente distinto al resto ("hacer el bien", no "consumir
+// contenido del festival"): banda `bg-green` de página completa (DESIGN.md
+// §3: "lime/orange/green pueden vestir una sección de peso completo
+// ocasionalmente"), cerrada abajo con ArcDivider y con un borde `ink` arriba
+// (border-t) — el mismo contorno grueso del resto del sitio, para que el
+// corte con la sección de cream de encima no quede sin línea. Motivo pata 🐾
+// en vez de una mascota (mascota morada/"la bocina" siguen sin asset real,
+// DESIGN.md §9 — no se inventa un marcador en su lugar).
+//
+// La sección solo muestra un resumen breve (demasiado texto corrido no
+// encaja en una landing mobile-first) + botón "Más información" que abre un
+// InfoSheet con el copy oficial de IMJUVE completo, verbatim — así se sigue
+// cumpliendo PLAN.md paso 6 ("usar el copy oficial tal cual, no reescribir
+// ni resumir de más") porque el texto íntegro sigue existiendo sin alterar,
+// solo cambia dónde vive: el resumen visible es redacción nueva y corta, no
+// una versión editada del oficial.
+//
+// El `bg-green` va en un div interior, NO en el <section>: si el color vive
+// en el <section> pinta toda su caja incluido el área detrás de ArcDivider,
+// y el recorte cóncavo del SVG (transparente donde la curva "muerde") solo
+// revela lo que hay detrás de él — si detrás sigue siendo verde, la curva
+// desaparece visualmente y se ve como un rectángulo. El <section> se queda
+// sin fondo (hereda el cream de <body>) para que ese recorte sí muestre cream.
+//
+// El botón de compartir usa Web Share API cuando está disponible (cubre
+// WhatsApp/redes nativas en móvil, el canal principal de tráfico del sitio);
+// el link de WhatsApp de al lado es el fallback funcional sin JS. Ninguno de
+// los dos inventa un dominio: comparten solo el texto hasta que el script
+// completa la URL real con window.location en tiempo de carga.
+import ArcDivider from './ArcDivider.astro';
+import InfoSheet from './InfoSheet.astro';
+
+const shareText =
+	'🐾 Súmate al Croquetón de Trueque con Huella en JUVELAND — sábado 29 de agosto en la Alameda de Jilotepec. Lleva croquetas para el Centro de Bienestar Animal.';
+const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+---
+
+<section id="trueque-con-huella" class="relative">
+	<div class="border-t-4 border-ink bg-green">
+		<div class="mx-auto flex max-w-2xl flex-col gap-md px-sm pt-lg pb-lg sm:px-lg">
+			<div class="flex items-center gap-sm">
+				<span
+					class="ink-outline sticker-shadow-sm flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cream text-2xl"
+					aria-hidden="true"
+				>
+					🐾
+				</span>
+				<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl">Trueque con Huella — Croquetón</h2>
+			</div>
+
+			<div class="flex flex-col gap-2 font-body text-ink/90">
+				<p>Lleva croquetas para perro o gato — van directo al Centro de Bienestar Animal de Jilotepec. 🐾</p>
+				<p>También puedes llevar papel para reciclar o sumarte al intercambio de árboles. 🌱</p>
+				<p>Y ayúdanos a compartir esta invitación: aunque no puedas donar, compartir también suma. ✨</p>
+			</div>
+
+			<InfoSheet
+				id="trueque-info"
+				title="Trueque con Huella — Croquetón"
+				triggerLabel="Más información"
+				triggerClass="w-fit font-headline text-sm font-bold text-ink underline underline-offset-4 uppercase decoration-2"
+			>
+				<p>
+					Como parte de la primera edición de JUVELAND, queremos invitarlos a sumarse a una actividad muy especial:
+					nuestro Croquetón, dentro de Trueque con Huella.
+				</p>
+				<p>
+					La idea es muy sencilla: además de ir a disfrutar de música, arte, emprendimiento y todas las actividades del
+					festival, queremos aprovechar que estaremos reunidos para hacer algo bueno por nuestro municipio y por
+					quienes también necesitan de nosotros. 🐶🐱
+				</p>
+				<p>
+					Por eso, queremos invitarlos a llevar croquetas para perro o gato, que serán destinadas al Centro de
+					Bienestar Animal de Jilotepec. 🐾
+				</p>
+				<p>No importa si es mucho o poquito; si cada uno de nosotros lleva algo, juntos podemos reunir muchísimo.</p>
+				<p>
+					Además, dentro de Trueque con Huella 🌱 también podrán llevar papel para reciclar y participar en nuestra
+					dinámica de intercambio de árboles.
+				</p>
+				<p>
+					📅 Sáb 29 de agosto 📍 Alameda de Jilotepec 🎡 JUVELAND 2026 · Primera edición
+				</p>
+				<p>
+					Y aquí también queremos pedirles muchísimo su ayuda: 🙌🏼 ¿nos ayudan a compartir el flyer en sus grupos,
+					escuelas, comunidades y redes sociales? Queremos que esta invitación llegue a muchas más personas y que
+					entre todos hagamos crecer el Croquetón. 🐾
+				</p>
+				<p>Aunque alguien no pueda donar, compartir también es una forma de ayudar. ✨</p>
+				<p class="font-headline font-bold text-ink uppercase">
+					Queremos que el primer JUVELAND no solamente se disfrute…<br />
+					Queremos que también deje huella.
+				</p>
+				<p>¡Nos vemos el sábado! 🎡</p>
+			</InfoSheet>
+
+			<p
+				class="ink-outline sticker-shadow-sm w-fit rounded-chip bg-cream px-sm py-1 font-headline text-xs font-bold text-ink uppercase sm:text-sm"
+			>
+				📅 Sáb 29 de agosto 📍 Alameda de Jilotepec 🎡 JUVELAND 2026 · Primera edición
+			</p>
+
+			<div class="mt-xs flex flex-wrap items-center gap-sm">
+				<button
+					type="button"
+					id="trueque-share-btn"
+					data-share-text={shareText}
+					class="ink-outline sticker-shadow rounded-chip bg-ink px-lg py-3 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					Comparte esta invitación
+				</button>
+				<a
+					id="trueque-whatsapp"
+					href={whatsappHref}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="ink-outline sticker-shadow-sm rounded-chip bg-cream px-md py-2 font-headline text-sm font-bold text-ink uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none"
+				>
+					WhatsApp
+				</a>
+			</div>
+		</div>
+	</div>
+
+	<ArcDivider fillClass="fill-green" class="h-10 sm:h-16" />
+</section>
+
+<script>
+	const shareBtn = document.getElementById('trueque-share-btn');
+	const whatsappLink = document.getElementById('trueque-whatsapp');
+
+	// La URL real solo se conoce en el cliente (el sitio aún no tiene dominio
+	// confirmado) — se completa aquí en vez de inventar un dominio en el build.
+	const pageUrl = `${window.location.origin}${window.location.pathname}#trueque-con-huella`;
+
+	if (whatsappLink instanceof HTMLAnchorElement) {
+		const text = shareBtn?.dataset.shareText ?? '';
+		whatsappLink.href = `https://wa.me/?text=${encodeURIComponent(`${text} ${pageUrl}`)}`;
+	}
+
+	shareBtn?.addEventListener('click', async () => {
+		const text = shareBtn.dataset.shareText ?? '';
+
+		if (navigator.share) {
+			try {
+				await navigator.share({ title: 'JUVELAND — Trueque con Huella', text, url: pageUrl });
+			} catch {
+				// El usuario cerró el share sheet nativo sin elegir nada — no hacer nada.
+			}
+			return;
+		}
+
+		// Sin Web Share API: copiar texto+link al portapapeles; el botón de
+		// WhatsApp de al lado sigue funcionando como fallback directo.
+		try {
+			await navigator.clipboard.writeText(`${text} ${pageUrl}`);
+			shareBtn.textContent = '¡Copiado! Pégalo donde quieras';
+			setTimeout(() => {
+				shareBtn.textContent = 'Comparte esta invitación';
+			}, 2500);
+		} catch {
+			// Portapapeles tampoco disponible — el link de WhatsApp basta.
+		}
+	});
+</script>

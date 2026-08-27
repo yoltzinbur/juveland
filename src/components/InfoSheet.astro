@@ -1,0 +1,98 @@
+---
+// Sheet de información — reusable: botón disparador + bottom sheet en móvil /
+// modal centrado en desktop, mismo patrón que el menú móvil de Navbar.astro
+// (`#nav-sheet`: backdrop `bg-ink/40`, `ink-outline-thick sticker-shadow
+// rounded-card`) para no inventar un segundo lenguaje de overlay en el sitio.
+//
+// Pensado para "resumen en la sección + copy completo adentro" (Trueque con
+// Huella es el primer caso: el texto oficial de IMJUVE va completo aquí,
+// verbatim, mientras la sección solo muestra un resumen breve).
+//
+// `id` debe ser único por instancia — todo lo demás (ids internos, el script)
+// se deriva de él, así que dos <InfoSheet> en la misma página no chocan.
+//
+// OJO al usar `max-w-{sm,md,lg,xl}` en este proyecto: global.css define
+// tokens `--spacing-xs/sm/md/lg/xl` propios (DESIGN.md, para gap/padding),
+// y Tailwind v4 resuelve las utilidades de tamaño con nombre (max-w-lg, etc.)
+// contra esa MISMA escala de spacing si no hay una escala de ancho dedicada
+// — así que `max-w-lg` aquí da 48px (el spacing "lg"), no los 32rem que da
+// Tailwind por default. Por eso el modal usa `max-w-[32rem]` en vez de
+// `max-w-lg`. `max-w-2xl` sigue siendo el de Tailwind (672px) porque el
+// proyecto no define un `--spacing-2xl` que lo choque.
+interface Props {
+	id: string;
+	title: string;
+	triggerLabel: string;
+	triggerClass?: string;
+}
+
+const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
+---
+
+<button
+	type="button"
+	id={`${id}-trigger`}
+	aria-haspopup="dialog"
+	aria-controls={`${id}-sheet`}
+	aria-expanded="false"
+	class={triggerClass}
+>
+	{triggerLabel}
+</button>
+
+<div id={`${id}-backdrop`} class="fixed inset-0 z-40 hidden bg-ink/40"></div>
+
+<div
+	id={`${id}-sheet`}
+	role="dialog"
+	aria-modal="true"
+	aria-label={title}
+	class="ink-outline-thick sticker-shadow fixed inset-x-3 bottom-3 z-50 hidden max-h-[75vh] overflow-y-auto rounded-card bg-cream p-md sm:inset-x-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-11/12 sm:max-w-[32rem] sm:-translate-x-1/2 sm:-translate-y-1/2"
+>
+	<div class="mb-sm flex items-center justify-between gap-sm">
+		<h3 class="font-headline text-lg font-bold text-ink uppercase sm:text-xl">{title}</h3>
+		<button
+			type="button"
+			id={`${id}-close`}
+			aria-label="Cerrar"
+			class="ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cream transition-transform duration-150 ease-out active:translate-y-0.5 active:shadow-none"
+		>
+			<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+				<path d="M1 1l12 12M13 1L1 13" stroke="var(--color-ink)" stroke-width="2" stroke-linecap="round" />
+			</svg>
+		</button>
+	</div>
+
+	<div class="flex flex-col gap-sm font-body text-ink/90">
+		<slot />
+	</div>
+</div>
+
+<script define:vars={{ id }}>
+	const trigger = document.getElementById(`${id}-trigger`);
+	const sheet = document.getElementById(`${id}-sheet`);
+	const backdrop = document.getElementById(`${id}-backdrop`);
+	const closeBtn = document.getElementById(`${id}-close`);
+
+	const openSheet = () => {
+		sheet?.classList.remove('hidden');
+		backdrop?.classList.remove('hidden');
+		trigger?.setAttribute('aria-expanded', 'true');
+		document.body.style.overflow = 'hidden';
+	};
+
+	const closeSheet = () => {
+		sheet?.classList.add('hidden');
+		backdrop?.classList.add('hidden');
+		trigger?.setAttribute('aria-expanded', 'false');
+		document.body.style.overflow = '';
+	};
+
+	trigger?.addEventListener('click', openSheet);
+	closeBtn?.addEventListener('click', closeSheet);
+	backdrop?.addEventListener('click', closeSheet);
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') closeSheet();
+	});
+</script>

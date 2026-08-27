@@ -3,6 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
 import Chips from '../components/Chips.astro';
+import WhyAttend from '../components/WhyAttend.astro';
+import Trueque from '../components/Trueque.astro';
 ---
 
 <Layout>
@@ -10,9 +12,13 @@ import Chips from '../components/Chips.astro';
 	<main>
 		<Hero />
 		<Chips />
-		<!-- [pendiente PLAN.md Pasada 1] Por qué venir, Trueque con Huella, agenda, bandas, etc. van aquí en las próximas sesiones. -->
+		<WhyAttend />
+		<Trueque />
+		<!-- [pendiente PLAN.md Pasada 1] Countdown/agenda, bandas, síguenos, mapa, formulario y footer van aquí en las próximas sesiones. -->
 		<section class="flex min-h-[40vh] items-start justify-center px-sm pt-xl">
-			<p class="max-w-prose text-center font-body text-ink/60">Próxima sección: Por qué venir (PLAN.md — Pasada 1, paso 5).</p>
+			<p class="max-w-prose text-center font-body text-ink/60">
+				Próxima sección: Cuenta regresiva + agenda rápida (PLAN.md — Pasada 1, paso 7).
+			</p>
 		</section>
 	</main>
 </Layout>
