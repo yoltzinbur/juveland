@@ -1,0 +1,99 @@
+---
+// Íconos de línea para Chips.astro — trazo simple (stroke, sin relleno) porque
+// el contorno "ink" grueso ya lo aporta el círculo de fondo; el ícono solo
+// necesita leerse limpio adentro. `class` se pasa completo desde el caller
+// (stroke-cream / stroke-ink) para no romper el escaneo estático de Tailwind.
+interface Props {
+	name: 'arte' | 'musica' | 'emprendimiento' | 'expresion' | 'convivencia';
+	class?: string;
+}
+
+const { name, class: className = '' } = Astro.props;
+---
+
+{
+	name === 'arte' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<path d="M12 20h9" />
+			<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z" />
+		</svg>
+	)
+}
+{
+	name === 'musica' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<path d="M9 18V5l12-2v13" />
+			<circle cx="6" cy="18" r="3" />
+			<circle cx="18" cy="16" r="3" />
+		</svg>
+	)
+}
+{
+	name === 'emprendimiento' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<path d="M12 2c2.5 2 4 5 4 8.5 0 2-1 4-4 6.5-3-2.5-4-4.5-4-6.5C8 7 9.5 4 12 2Z" />
+			<circle cx="12" cy="9.5" r="1.5" />
+			<path d="M9 15l-3 3 1 3 3-1" />
+			<path d="M15 15l3 3-1 3-3-1" />
+		</svg>
+	)
+}
+{
+	name === 'expresion' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z" />
+			<path d="M14 8a4 4 0 0 1 0 8" />
+			<path d="M17 5a8 8 0 0 1 0 14" />
+		</svg>
+	)
+}
+{
+	name === 'convivencia' && (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			class={className}
+			aria-hidden="true"
+		>
+			<path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+			<circle cx="10" cy="7" r="4" />
+			<path d="M22.5 21v-2a4 4 0 0 0-3-3.87" />
+			<path d="M16.5 3.13a4 4 0 0 1 0 7.75" />
+		</svg>
+	)
+}

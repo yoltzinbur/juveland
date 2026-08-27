@@ -1,0 +1,45 @@
+---
+// Chips de intro — PLAN.md Pasada 1, paso 4 / DESIGN.md §6.
+// 5 círculos (Arte, Música, Emprendimiento, Expresión, Convivencia), cada uno
+// con tinta de acento distinta y contorno ink, ícono + label debajo (patrón
+// Alldae/Qwero confirmado en DESIGN.md). Fila centrada en desktop, scroll-snap
+// horizontal en móvil para no aplastar 5 círculos en una pantalla chica.
+//
+// bg/stroke se listan como literales completos a propósito (mismo criterio
+// que style-guide.astro): el escáner estático de Tailwind solo detecta clases
+// que aparecen como texto completo en el archivo, no las armadas por
+// interpolación de una variable arbitraria.
+import ChipIcon from './ChipIcon.astro';
+
+const chips = [
+	{ name: 'arte' as const, label: 'Arte', bg: 'bg-purple', stroke: 'stroke-cream' },
+	{ name: 'musica' as const, label: 'Música', bg: 'bg-red', stroke: 'stroke-cream' },
+	{ name: 'emprendimiento' as const, label: 'Emprendimiento', bg: 'bg-green', stroke: 'stroke-ink' },
+	{ name: 'expresion' as const, label: 'Expresión', bg: 'bg-orange', stroke: 'stroke-ink' },
+	{ name: 'convivencia' as const, label: 'Convivencia', bg: 'bg-lime', stroke: 'stroke-ink' },
+];
+---
+
+<section class="px-sm py-xl">
+	<div class="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
+		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl">¿Qué te espera en JUVELAND?</h2>
+		<p class="font-body text-ink/70">Un solo día, un mismo lugar, de todo un poco.</p>
+	</div>
+
+	<div
+		class="mt-lg flex snap-x snap-mandatory gap-md overflow-x-auto px-sm pb-sm sm:mx-auto sm:max-w-4xl sm:snap-none sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0"
+	>
+		{
+			chips.map((chip) => (
+				<div class="flex w-24 shrink-0 snap-center flex-col items-center gap-sm sm:w-28">
+					<div
+						class={`ink-outline sticker-shadow flex h-20 w-20 shrink-0 items-center justify-center rounded-full sm:h-24 sm:w-24 ${chip.bg}`}
+					>
+						<ChipIcon name={chip.name} class={`h-8 w-8 sm:h-9 sm:w-9 ${chip.stroke}`} />
+					</div>
+					<span class="font-headline text-xs font-bold text-ink uppercase sm:text-sm">{chip.label}</span>
+				</div>
+			))
+		}
+	</div>
+</section>
