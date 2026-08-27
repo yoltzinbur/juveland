@@ -50,7 +50,7 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 	class="ink-outline-thick sticker-shadow fixed inset-x-3 bottom-3 z-50 hidden max-h-[75vh] overflow-y-auto rounded-card bg-cream p-md sm:inset-x-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-11/12 sm:max-w-[32rem] sm:-translate-x-1/2 sm:-translate-y-1/2"
 >
 	<div class="mb-sm flex items-center justify-between gap-sm">
-		<h3 class="font-headline text-lg font-bold text-ink uppercase sm:text-xl">{title}</h3>
+		<h3 class="font-headline text-lg font-bold text-ink uppercase sm:text-xl lg:text-2xl">{title}</h3>
 		<button
 			type="button"
 			id={`${id}-close`}

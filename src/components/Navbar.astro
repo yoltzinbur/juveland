@@ -14,21 +14,21 @@ const links = [
 ];
 ---
 
-<header class="sticky top-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-5xl">
+<header class="sticky top-4 z-50 mx-auto w-[calc(100%-2rem)] max-w-5xl lg:max-w-6xl">
 	<nav
 		aria-label="Principal"
-		class="ink-outline-thick sticker-shadow flex items-center justify-between gap-sm rounded-chip bg-cream px-md py-xs"
+		class="ink-outline-thick sticker-shadow flex items-center justify-between gap-sm rounded-chip bg-cream px-md py-xs lg:px-lg lg:py-sm"
 	>
 		<a
 			href="#inicio"
-			class="flex shrink-0 items-center gap-2 font-display text-lg font-semibold text-ink"
+			class="flex shrink-0 items-center gap-2 font-display text-lg font-semibold text-ink lg:text-xl"
 			aria-label="Juveland, ir al inicio"
 		>
-			<Image src={mascotaMostaza} alt="" width={64} class="h-8 w-8 shrink-0" />
+			<Image src={mascotaMostaza} alt="" width={64} class="h-8 w-8 shrink-0 lg:h-9 lg:w-9" />
 			Juveland
 		</a>
 
-		<ul class="hidden items-center gap-lg font-headline text-sm font-semibold tracking-wide text-ink uppercase md:flex">
+		<ul class="hidden items-center gap-lg font-headline text-sm font-semibold tracking-wide text-ink uppercase md:flex lg:text-base">
 			{
 				links.map((link) => (
 					<li>
@@ -42,7 +42,7 @@ const links = [
 
 		<a
 			href="#territorio-emprende"
-			class="ink-outline sticker-shadow-sm hidden shrink-0 rounded-chip bg-red px-md py-2 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none md:inline-block"
+			class="ink-outline sticker-shadow-sm hidden shrink-0 rounded-chip bg-red px-md py-2 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none md:inline-block lg:px-lg lg:py-3 lg:text-base"
 		>
 			Regístrate
 		</a>

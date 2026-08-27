@@ -12,15 +12,15 @@ const reasons = [
 ---
 
 <section class="px-sm py-xl">
-	<div class="ink-outline sticker-shadow mx-auto flex max-w-2xl flex-col gap-md rounded-card bg-cream p-md sm:p-lg">
-		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl">¿Por qué venir?</h2>
+	<div class="ink-outline sticker-shadow mx-auto flex max-w-2xl flex-col gap-md rounded-card bg-cream p-md sm:p-lg lg:max-w-3xl lg:p-xl">
+		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¿Por qué venir?</h2>
 
 		<ul class="flex flex-col gap-sm">
 			{
 				reasons.map((reason) => (
 					<li class="flex items-start gap-sm">
 						<span
-							class={`ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${reason.check}`}
+							class={`ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full lg:h-9 lg:w-9 ${reason.check}`}
 						>
 							<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
 								<path
@@ -32,7 +32,7 @@ const reasons = [
 								/>
 							</svg>
 						</span>
-						<p class="pt-1 font-body text-base text-ink/85 sm:text-lg">{reason.text}</p>
+						<p class="pt-1 font-body text-base text-ink/85 sm:text-lg lg:text-xl">{reason.text}</p>
 					</li>
 				))
 			}
