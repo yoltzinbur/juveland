@@ -6,52 +6,65 @@
 // 8) para que cada banda se vea con la misma tinta en las dos secciones.
 //
 // El countdown es en vivo (PLAN.md permite "estático... o con ella si es
-// rápido") — un solo setInterval de 1s sin animación, así que no compite con
-// el tick/flip de Pasada 2 (GSAP) que solo le agrega el efecto visual encima
-// más adelante. Hora objetivo fija en -06:00 (Zona Centro de México, sin
-// horario de verano desde 2022) para no depender de la zona horaria del
-// visitante.
+// rápido") — un solo setInterval de 1s. Hora objetivo fija en -06:00 (Zona
+// Centro de México, sin horario de verano desde 2022) para no depender de la
+// zona horaria del visitante.
+//
+// Pasada 2 (DESIGN.md §7 — "tick/flip simple en los números" + fade+rise
+// general para el resto de la sección) vive en el <script> al final.
 import { lineup } from '../data/lineup';
 ---
 
 <section id="agenda" class="px-sm py-xl">
 	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md lg:max-w-3xl">
-		<div class="flex flex-col items-center gap-2 text-center">
+		<div class="agenda-heading flex flex-col items-center gap-2 text-center">
 			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¡Ya casi!</h2>
 			<p class="font-body text-ink/70 lg:text-lg">Sábado 29 de agosto · 2:00 PM · Alameda de Jilotepec</p>
 		</div>
 
-		<div class="ink-outline sticker-shadow flex w-fit flex-col items-center gap-sm rounded-card bg-lime px-lg py-md lg:px-10 lg:py-lg">
+		<div class="countdown-card ink-outline sticker-shadow flex w-fit flex-col items-center gap-sm rounded-card bg-lime px-lg py-md lg:px-10 lg:py-lg">
 			<span class="font-headline text-xs font-bold tracking-wide text-ink/70 uppercase lg:text-sm">Faltan</span>
 			<div class="flex items-start gap-xs sm:gap-sm" id="countdown-numbers" data-target="2026-08-29T14:00:00-06:00">
 				<div class="flex flex-col items-center">
-					<span class="font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl" data-unit="days">00</span>
+					<span
+						class="inline-block min-w-[2ch] text-center font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl"
+						data-unit="days">00</span
+					>
 					<span class="font-headline text-[10px] font-bold text-ink/70 uppercase sm:text-xs lg:text-sm">días</span>
 				</div>
 				<span class="pt-1 font-display text-3xl font-bold text-ink/40 sm:text-4xl lg:text-5xl">:</span>
 				<div class="flex flex-col items-center">
-					<span class="font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl" data-unit="hours">00</span>
+					<span
+						class="inline-block min-w-[2ch] text-center font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl"
+						data-unit="hours">00</span
+					>
 					<span class="font-headline text-[10px] font-bold text-ink/70 uppercase sm:text-xs lg:text-sm">hrs</span>
 				</div>
 				<span class="pt-1 font-display text-3xl font-bold text-ink/40 sm:text-4xl lg:text-5xl">:</span>
 				<div class="flex flex-col items-center">
-					<span class="font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl" data-unit="minutes">00</span>
+					<span
+						class="inline-block min-w-[2ch] text-center font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl"
+						data-unit="minutes">00</span
+					>
 					<span class="font-headline text-[10px] font-bold text-ink/70 uppercase sm:text-xs lg:text-sm">min</span>
 				</div>
 				<span class="pt-1 font-display text-3xl font-bold text-ink/40 sm:text-4xl lg:text-5xl">:</span>
 				<div class="flex flex-col items-center">
-					<span class="font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl" data-unit="seconds">00</span>
+					<span
+						class="inline-block min-w-[2ch] text-center font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl"
+						data-unit="seconds">00</span
+					>
 					<span class="font-headline text-[10px] font-bold text-ink/70 uppercase sm:text-xs lg:text-sm">seg</span>
 				</div>
 			</div>
 		</div>
 
-		<h3 class="mt-md font-headline text-xl font-bold text-ink uppercase sm:text-2xl lg:text-3xl">Agenda del día</h3>
+		<h3 class="agenda-subheading mt-md font-headline text-xl font-bold text-ink uppercase sm:text-2xl lg:text-3xl">Agenda del día</h3>
 
 		<div class="flex w-full flex-col gap-sm">
 			{
 				lineup.map((item) => (
-					<div class={`ink-outline sticker-shadow-sm relative flex overflow-hidden rounded-card ${item.bg}`}>
+					<div class={`agenda-item ink-outline sticker-shadow-sm relative flex overflow-hidden rounded-card ${item.bg}`}>
 						<div class="relative flex w-20 shrink-0 items-center justify-center border-r-2 border-dashed border-ink py-sm sm:w-24 lg:w-28">
 							<span class={`font-headline text-lg font-extrabold tabular-nums sm:text-xl lg:text-2xl ${item.text}`}>{item.time}</span>
 							<span class="ink-outline absolute -top-2 -right-2 h-4 w-4 rounded-full bg-cream" />
@@ -68,36 +81,164 @@ import { lineup } from '../data/lineup';
 </section>
 
 <script>
+	// Pasada 2 (PLAN.md) — fade+rise general para la sección (encabezado,
+	// tarjeta del countdown, subtítulo, tiras de la agenda) + "tick/flip
+	// simple" en los dígitos del countdown (DESIGN.md §7). Aislado en su
+	// propia isla de Astro, GSAP + ScrollTrigger propios de esta sección.
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const section = document.querySelector<HTMLElement>('#agenda');
+	const heading = section?.querySelector<HTMLElement>('.agenda-heading');
+	const countdownCard = section?.querySelector<HTMLElement>('.countdown-card');
+	const subheading = section?.querySelector<HTMLElement>('.agenda-subheading');
+	const agendaItems = section ? Array.from(section.querySelectorAll<HTMLElement>('.agenda-item')) : [];
+
+	// Mismo patrón que Navbar/Hero/Chips/WhyAttend/Loader: dos condiciones
+	// mutuamente excluyentes que cubren el 100% de los casos.
+	gsap.matchMedia().add(
+		{
+			reduceMotion: '(prefers-reduced-motion: reduce)',
+			motionOk: '(prefers-reduced-motion: no-preference)',
+		},
+		(context) => {
+			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+			if (!section) return;
+
+			const tl = gsap.timeline({
+				scrollTrigger: {
+					trigger: section,
+					start: 'top 78%',
+					toggleActions: 'play none none reverse',
+				},
+			});
+
+			if (heading) {
+				tl.from(heading, {
+					opacity: 0,
+					y: reduceMotion ? 0 : 16,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+				});
+			}
+
+			if (countdownCard) {
+				// Un poco de pop (back.out) en vez de un fade plano — es la pieza
+				// central de la sección, el "tag" con la cuenta regresiva.
+				tl.from(
+					countdownCard,
+					{
+						opacity: 0,
+						y: reduceMotion ? 0 : 20,
+						scale: reduceMotion ? 1 : 0.9,
+						duration: reduceMotion ? 0.3 : 0.5,
+						ease: 'back.out(1.6)',
+					},
+					reduceMotion ? undefined : '-=0.2',
+				);
+			}
+
+			if (subheading) {
+				tl.from(subheading, {
+					opacity: 0,
+					y: reduceMotion ? 0 : 16,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+				});
+			}
+
+			if (agendaItems.length) {
+				// Intercaladas izquierda/derecha (índice par entra desde la
+				// izquierda, impar desde la derecha) en vez del fade+rise vertical
+				// que usan el resto de las secciones — les da su propio ritmo, como
+				// tiras de boleto repartiéndose de un mazo.
+				tl.from(
+					agendaItems,
+					{
+						opacity: 0,
+						x: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -60 : 60),
+						y: 0,
+						duration: reduceMotion ? 0.3 : 0.55,
+						ease: 'power2.out',
+						stagger: reduceMotion ? 0 : 0.08,
+					},
+					reduceMotion ? undefined : '-=0.2',
+				);
+			}
+		},
+	);
+
+	// --- Countdown en vivo, con tick/flip en cada dígito que cambia --------
 	const wrapper = document.getElementById('countdown-numbers');
 	const target = new Date(wrapper?.dataset.target ?? '');
 
-	const days = wrapper?.querySelector('[data-unit="days"]');
-	const hours = wrapper?.querySelector('[data-unit="hours"]');
-	const minutes = wrapper?.querySelector('[data-unit="minutes"]');
-	const seconds = wrapper?.querySelector('[data-unit="seconds"]');
+	const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
+	const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
+	const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
+	const seconds = wrapper?.querySelector<HTMLElement>('[data-unit="seconds"]');
 
-	const pad = (n) => String(Math.max(n, 0)).padStart(2, '0');
+	const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
+	gsap.set(digitEls, { transformPerspective: 300 });
+
+	const flipReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	// El primer render (de "00" al valor real) no lleva flip: si no, compite
+	// con el fade+rise de entrada de arriba, que corre justo cuando esta
+	// tarjeta recién se vuelve visible por primera vez.
+	let isFirstTick = true;
+
+	// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
+	// quedar de canto (invisible un instante), ahí se cambia el texto, y
+	// termina de girar del otro lado — dos giros cortos, no un flip-clock de
+	// dos paneles superpuestos, pero da la misma sensación de "voltear" sin
+	// duplicar el DOM de cada dígito.
+	const setDigit = (el: HTMLElement | null | undefined, value: string) => {
+		if (!el || el.textContent === value) return;
+
+		if (isFirstTick || flipReduceMotion) {
+			el.textContent = value;
+			return;
+		}
+
+		gsap.to(el, {
+			rotationX: -90,
+			duration: 0.15,
+			ease: 'power1.in',
+			onComplete: () => {
+				el.textContent = value;
+				gsap.fromTo(el, { rotationX: 90 }, { rotationX: 0, duration: 0.15, ease: 'power1.out' });
+			},
+		});
+	};
+
+	const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
+
+	let intervalId: ReturnType<typeof setInterval> | undefined;
 
 	const tick = () => {
 		const diff = target.getTime() - Date.now();
 
 		if (diff <= 0) {
-			if (days) days.textContent = '00';
-			if (hours) hours.textContent = '00';
-			if (minutes) minutes.textContent = '00';
-			if (seconds) seconds.textContent = '00';
+			setDigit(days, '00');
+			setDigit(hours, '00');
+			setDigit(minutes, '00');
+			setDigit(seconds, '00');
+			isFirstTick = false;
 			clearInterval(intervalId);
 			return;
 		}
 
 		const totalSeconds = Math.floor(diff / 1000);
-		if (days) days.textContent = pad(Math.floor(totalSeconds / 86400));
-		if (hours) hours.textContent = pad(Math.floor((totalSeconds % 86400) / 3600));
-		if (minutes) minutes.textContent = pad(Math.floor((totalSeconds % 3600) / 60));
-		if (seconds) seconds.textContent = pad(totalSeconds % 60);
+		setDigit(days, pad(Math.floor(totalSeconds / 86400)));
+		setDigit(hours, pad(Math.floor((totalSeconds % 86400) / 3600)));
+		setDigit(minutes, pad(Math.floor((totalSeconds % 3600) / 60)));
+		setDigit(seconds, pad(totalSeconds % 60));
+		isFirstTick = false;
 	};
 
-	let intervalId;
 	tick();
 	intervalId = setInterval(tick, 1000);
 </script>
