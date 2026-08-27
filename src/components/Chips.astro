@@ -14,6 +14,9 @@
 // que style-guide.astro): el escáner estático de Tailwind solo detecta clases
 // que aparecen como texto completo en el archivo, no las armadas por
 // interpolación de una variable arbitraria.
+// El fade+rise al entrar en viewport (stagger ~0.06s, DESIGN.md §7) es
+// Pasada 2 — vive en el <script> al final del archivo, aislado como isla de
+// Astro propia de esta sección.
 import ChipIcon from './ChipIcon.astro';
 
 const chips = [
@@ -25,8 +28,8 @@ const chips = [
 ];
 ---
 
-<section class="px-sm py-xl">
-	<div class="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center lg:max-w-3xl">
+<section id="chips" class="px-sm py-xl">
+	<div class="chips-heading mx-auto flex max-w-2xl flex-col items-center gap-2 text-center lg:max-w-3xl">
 		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¿Qué te espera en JUVELAND?</h2>
 		<p class="font-body text-ink/70 lg:text-lg">Un solo día, un mismo lugar, de todo un poco.</p>
 	</div>
@@ -34,7 +37,7 @@ const chips = [
 	<div class="mx-auto mt-lg flex max-w-4xl flex-wrap justify-center gap-md lg:max-w-5xl">
 		{
 			chips.map((chip) => (
-				<div class="flex w-24 flex-col items-center gap-sm sm:w-28 lg:w-32">
+				<div class="chip-card flex w-24 flex-col items-center gap-sm sm:w-28 lg:w-32">
 					<div
 						class={`ink-outline sticker-shadow flex h-20 w-20 shrink-0 items-center justify-center rounded-full sm:h-24 sm:w-24 lg:h-28 lg:w-28 ${chip.bg}`}
 					>
@@ -46,3 +49,68 @@ const chips = [
 		}
 	</div>
 </section>
+
+<script>
+	// Pasada 2 (PLAN.md) — "Chips... fade+rise por sección vía
+	// IntersectionObserver, stagger ~0.06s" (DESIGN.md §7 usa ScrollTrigger
+	// como el equivalente GSAP de ese patrón en todo el resto del sitio).
+	// El encabezado entra primero como bloque; cada círculo se "estampa" con
+	// un ligero overshoot (back.out) para que se sienta como una tarjeta
+	// sticker aterrizando, no solo un fade plano.
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const section = document.querySelector<HTMLElement>('#chips');
+	const heading = section?.querySelector<HTMLElement>('.chips-heading');
+	const cards = section ? Array.from(section.querySelectorAll<HTMLElement>('.chip-card')) : [];
+
+	// Mismo patrón que Navbar.astro/Hero.astro: dos condiciones mutuamente
+	// excluyentes que cubren el 100% de los casos, porque con una sola
+	// condición nombrada matchMedia solo invoca el callback cuando ESA media
+	// query da true.
+	gsap.matchMedia().add(
+		{
+			reduceMotion: '(prefers-reduced-motion: reduce)',
+			motionOk: '(prefers-reduced-motion: no-preference)',
+		},
+		(context) => {
+			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+			if (!section) return;
+
+			const tl = gsap.timeline({
+				scrollTrigger: {
+					trigger: section,
+					start: 'top 82%',
+					toggleActions: 'play none none reverse',
+				},
+			});
+
+			if (heading) {
+				tl.from(heading, {
+					opacity: 0,
+					y: reduceMotion ? 0 : 16,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+				});
+			}
+
+			if (cards.length) {
+				tl.from(
+					cards,
+					{
+						opacity: 0,
+						y: reduceMotion ? 0 : 24,
+						scale: reduceMotion ? 1 : 0.85,
+						duration: reduceMotion ? 0.3 : 0.5,
+						ease: 'back.out(1.7)',
+						stagger: reduceMotion ? 0 : 0.06,
+					},
+					reduceMotion ? undefined : '-=0.25',
+				);
+			}
+		},
+	);
+</script>

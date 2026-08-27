@@ -2,14 +2,25 @@
 // Loader — PLAN.md Pasada 1, paso 3 / DESIGN.md §6.
 // Overlay cream a pantalla completa con ambos logos estáticos, uno junto al
 // otro (el crossfade+escala entre ellos es Pasada 2, DESIGN.md §7). Se oculta
-// sin transición al terminar de cargar y no vuelve a mostrarse en visitas
-// repetidas (flag en localStorage) — el fundido de salida también es Pasada 2.
+// sin transición al terminar de cargar — el fundido de salida también es
+// Pasada 2.
 //
 // El script tenía un tope MÁXIMO de espera (4s, para conexiones lentas) pero
 // ningún mínimo — en una carga rápida (que es casi siempre, el sitio pesa
 // poco) se ocultaba casi al instante, demasiado rápido para verlo incluso
 // forzando throttling. `MIN_VISIBLE_MS` garantiza que se quede en pantalla
 // al menos ese tiempo sin importar qué tan rápido termine de cargar todo.
+//
+// Antes se saltaba por completo en visitas repetidas (flag en localStorage).
+// Se quitó ese salto: el Hero divide "JUVELAND" en letras con SplitText en
+// cuanto las fuentes terminan de cargar (`document.fonts.ready`), y si el
+// loader ya se había quitado para entonces, el usuario alcanza a ver el
+// título completo un instante antes de que se rompa en letras sueltas para
+// volver a armarse — el parpadeo que se quería evitar. Ahora `hide()` espera
+// también a `document.fonts.ready`, no solo a que cargue la página, así que
+// ese parpadeo no puede ocurrir sin acoplar este script a Hero.astro. Las
+// visitas repetidas siguen siendo más rápidas (mínimo más corto) porque no
+// hace falta "presentar" el logo otra vez.
 //
 // `loading="eager"` en los dos logos: son lo primero que se ve (antes que
 // cualquier otra cosa de la página), así que el `loading="lazy"` por
@@ -45,14 +56,15 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 <script is:inline>
 	(function () {
 		var STORAGE_KEY = 'juveland:loader-seen';
-		var MIN_VISIBLE_MS = 1000;
+		var seenBefore = localStorage.getItem(STORAGE_KEY) === '1';
+		// Primera visita: 1s, para que el logo se alcance a notar. Visitas
+		// repetidas: bastante más corto — este mínimo ya no es sobre "presentar"
+		// el logo, es solo el margen para que el Hero termine de dividir su
+		// título en letras antes de que se vea el fondo detrás del loader.
+		var MIN_VISIBLE_MS = seenBefore ? 500 : 1000;
+		var MAX_WAIT_MS = 4000;
 		var loader = document.getElementById('loader');
 		if (!loader) return;
-
-		if (localStorage.getItem(STORAGE_KEY) === '1') {
-			loader.style.display = 'none';
-			return;
-		}
 
 		var shownAt = Date.now();
 		var hidden = false;
@@ -68,11 +80,19 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 			}, wait);
 		};
 
-		if (document.readyState === 'complete') {
-			hide();
-		} else {
-			window.addEventListener('load', hide);
-			window.setTimeout(hide, 4000);
-		}
+		var pageLoaded =
+			document.readyState === 'complete'
+				? Promise.resolve()
+				: new Promise(function (resolve) {
+						window.addEventListener('load', resolve);
+					});
+
+		// Ver el comentario de arriba: se espera tanto a que cargue la página
+		// como a que las fuentes estén listas, que es justo la señal que usa
+		// Hero.astro para empezar a dividir "JUVELAND" en letras.
+		Promise.all([pageLoaded, document.fonts.ready]).then(hide);
+		// Tope de seguridad — nunca deja al usuario atorado más de 4s en
+		// conexiones lentas o si alguna de las promesas de arriba no resuelve.
+		window.setTimeout(hide, MAX_WAIT_MS);
 	})();
 </script>

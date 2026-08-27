@@ -1,9 +1,15 @@
 ---
 // Por qué venir — PLAN.md Pasada 1, paso 5 / DESIGN.md §6.
-// Tarjeta con 2-3 razones cortas y checkmarks estilo sticker (lime/green) en
-// vez del check amarillo de Alldae. Contenido ya disponible del mensaje de
-// convocatoria — nada pendiente de IMJUVE aquí. La cascada numerada 01→02→03
-// (DESIGN.md §7) es Pasada 2; por ahora es una lista estática.
+// Tarjeta con razones cortas y checkmarks estilo sticker (lime/green) en vez
+// del check amarillo de Alldae. Contenido ya disponible del mensaje de
+// convocatoria — nada pendiente de IMJUVE aquí.
+//
+// Pasada 2 (DESIGN.md §7 — "revela sus puntos en cascada numerada 01→02→03,
+// como los pasos de Socials Analytics, cada punto entra con su check al
+// mismo tiempo, no todos de golpe"): el numeral grande y pálido detrás de
+// cada check es nuevo aquí (Pasada 1 solo tenía el check, sin número — la
+// numeración en sí era parte de lo que quedó pendiente para esta sesión, no
+// solo su animación). El movimiento vive en el <script> al final.
 const reasons = [
 	{ text: 'Música en vivo todo el día, con bandas y artistas locales.', check: 'bg-lime' },
 	{ text: 'Territorio Emprende: muestra o vende tu proyecto frente a todo Jilotepec.', check: 'bg-green' },
@@ -16,16 +22,22 @@ const reasons = [
 ];
 ---
 
-<section class="px-sm py-xl">
+<section id="por-que-venir" class="px-sm py-xl">
 	<div class="ink-outline sticker-shadow mx-auto flex max-w-2xl flex-col gap-md rounded-card bg-cream p-md sm:p-lg lg:max-w-3xl lg:p-xl">
-		<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¿Por qué venir?</h2>
+		<h2 class="why-heading font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¿Por qué venir?</h2>
 
-		<ul class="flex flex-col gap-sm">
+		<ul class="flex flex-col gap-md">
 			{
-				reasons.map((reason) => (
-					<li class="flex items-start gap-sm">
+				reasons.map((reason, i) => (
+					<li class="reason-item flex items-center gap-sm">
 						<span
-							class={`ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full lg:h-9 lg:w-9 ${reason.check}`}
+							class="shrink-0 font-display text-3xl font-bold text-ink/15 tabular-nums sm:text-4xl lg:text-5xl"
+							aria-hidden="true"
+						>
+							{String(i + 1).padStart(2, '0')}
+						</span>
+						<span
+							class={`reason-check ink-outline sticker-shadow-sm flex h-8 w-8 shrink-0 items-center justify-center rounded-full lg:h-9 lg:w-9 ${reason.check}`}
 						>
 							<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true">
 								<path
@@ -37,10 +49,93 @@ const reasons = [
 								/>
 							</svg>
 						</span>
-						<p class="pt-1 font-body text-base text-ink/85 sm:text-lg lg:text-xl">{reason.text}</p>
+						<p class="font-body text-base text-ink/85 sm:text-lg lg:text-xl">{reason.text}</p>
 					</li>
 				))
 			}
 		</ul>
 	</div>
 </section>
+
+<script>
+	// Pasada 2 (PLAN.md) — "Por qué venir" en cascada numerada 01→02→03, como
+	// los pasos de Socials Analytics: cada punto entra con su numeral y su
+	// check al mismo tiempo (no son animaciones separadas dentro del mismo
+	// punto), pero los puntos entre sí sí van uno detrás de otro, no todos de
+	// golpe — de ahí el stagger más largo que en Chips.astro (ahí eran 5
+	// círculos chicos entrando casi juntos; aquí son pasos que se quieren
+	// leer en secuencia).
+	import { gsap } from 'gsap';
+	import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+	gsap.registerPlugin(ScrollTrigger);
+
+	const section = document.querySelector<HTMLElement>('#por-que-venir');
+	const heading = section?.querySelector<HTMLElement>('.why-heading');
+	const items = section ? Array.from(section.querySelectorAll<HTMLElement>('.reason-item')) : [];
+	const checks = section ? Array.from(section.querySelectorAll<HTMLElement>('.reason-check')) : [];
+
+	// Mismo patrón que Navbar/Hero/Chips: dos condiciones mutuamente
+	// excluyentes que cubren el 100% de los casos.
+	gsap.matchMedia().add(
+		{
+			reduceMotion: '(prefers-reduced-motion: reduce)',
+			motionOk: '(prefers-reduced-motion: no-preference)',
+		},
+		(context) => {
+			const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+			if (!section) return;
+
+			const tl = gsap.timeline({
+				scrollTrigger: {
+					trigger: section,
+					start: 'top 78%',
+					toggleActions: 'play none none reverse',
+				},
+			});
+
+			if (heading) {
+				tl.from(heading, {
+					opacity: 0,
+					y: reduceMotion ? 0 : 16,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+				});
+			}
+
+			if (items.length) {
+				// El punto completo (numeral + check + texto) entra como un solo
+				// bloque fade+rise — "el numeral y el check al mismo tiempo" ya sale
+				// gratis al animar el <li> entero en vez de sus partes por separado.
+				tl.from(
+					items,
+					{
+						opacity: 0,
+						y: reduceMotion ? 0 : 20,
+						duration: reduceMotion ? 0.3 : 0.5,
+						ease: 'power2.out',
+						stagger: reduceMotion ? 0 : 0.15,
+					},
+					reduceMotion ? undefined : '-=0.2',
+				);
+			}
+
+			// El check, además, se "tica" con un pop propio superpuesto al mismo
+			// instante en que aparece su punto — refuerza la sensación de "listo,
+			// siguiente" en vez de un fade genérico.
+			if (checks.length && !reduceMotion) {
+				tl.from(
+					checks,
+					{
+						scale: 0.4,
+						duration: 0.4,
+						ease: 'back.out(2)',
+						stagger: 0.15,
+					},
+					'<',
+				);
+			}
+		},
+	);
+</script>
