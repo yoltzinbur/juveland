@@ -75,6 +75,9 @@ const links = [
 	aria-label="Menú"
 	class="ink-outline-thick sticker-shadow fixed inset-x-3 bottom-3 z-50 hidden rounded-card bg-cream p-md md:hidden"
 >
+	{/* Sin CTA "Regístrate" aquí: mientras no exista el form de IMJUVE el registro
+	   es por WhatsApp desde la sección Territorio Emprende, ya enlazada en la
+	   lista de arriba — un botón aparte solo duplicaría ese link. */}
 	<ul class="flex flex-col gap-xs font-headline text-lg font-semibold text-ink uppercase">
 		{
 			links.map((link) => (
@@ -86,12 +89,6 @@ const links = [
 			))
 		}
 	</ul>
-	<a
-		href="#territorio-emprende"
-		class="nav-sheet-link ink-outline sticker-shadow-sm mt-md block rounded-chip bg-red px-md py-3 text-center font-headline text-sm font-bold text-cream uppercase"
-	>
-		Regístrate
-	</a>
 </div>
 
 <script>
