@@ -1,9 +1,16 @@
 ---
-// Loader — PLAN.md Pasada 1, paso 3 / DESIGN.md §6.
-// Overlay cream a pantalla completa con ambos logos estáticos, uno junto al
-// otro (el crossfade+escala entre ellos es Pasada 2, DESIGN.md §7). Se oculta
-// sin transición al terminar de cargar — el fundido de salida también es
-// Pasada 2.
+// Loader — PLAN.md Pasada 1, paso 3 / DESIGN.md §6-7.
+// Overlay cream a pantalla completa. Pasada 2 agrega el crossfade + leve
+// escala entre el logo de IMJUVE y el de Jilotepec Pueblo Mágico (DESIGN.md
+// §7: "no es un morph de paths — un crossfade con leve escala se ve casi
+// igual de pulido y no mete complejidad de licencia"). Por eso los dos logos
+// viven apilados en la misma celda de un grid (en vez de uno junto al otro
+// con un "×" como en Pasada 1) — el crossfade sustituye a un morph, así que
+// tienen que ocupar el mismo lugar, no dos lugares distintos.
+//
+// Si el JS nunca carga: el logo de Pueblo Mágico ya sale con `opacity-0`
+// como clase estática (no depende de que corra el script), así que sin JS se
+// ve un único logo de IMJUVE legible en vez de dos encimados e ilegibles.
 //
 // El script tenía un tope MÁXIMO de espera (4s, para conexiones lentas) pero
 // ningún mínimo — en una carga rápida (que es casi siempre, el sitio pesa
@@ -33,59 +40,105 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 ---
 
 <div id="loader" class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-md bg-cream px-sm">
-	<div class="flex items-center gap-md sm:gap-lg">
+	<div class="grid h-16 w-16 place-items-center sm:h-24 sm:w-24 lg:h-28 lg:w-28">
 		<Image
 			src={logoImjuve}
 			alt="Logo de IMJUVE Jilotepec"
 			width={140}
 			loading="eager"
-			class="h-auto w-20 sm:w-28 lg:w-32"
+			class="loader-logo loader-logo-imjuve col-start-1 row-start-1 h-auto w-16 sm:w-24 lg:w-28"
 		/>
-		<span class="font-display text-2xl text-ink/30 sm:text-3xl lg:text-4xl" aria-hidden="true">×</span>
 		<Image
 			src={logoPuebloMagico}
 			alt="Logo de Jilotepec, Pueblo Mágico"
 			width={140}
 			loading="eager"
-			class="h-auto w-20 sm:w-28 lg:w-32"
+			class="loader-logo loader-logo-pueblo col-start-1 row-start-1 h-auto w-16 opacity-0 sm:w-24 lg:w-28"
 		/>
 	</div>
 	<p class="font-headline text-xs font-bold tracking-wide text-ink/50 uppercase">Cargando…</p>
 </div>
 
-<script is:inline>
-	(function () {
-		var STORAGE_KEY = 'juveland:loader-seen';
-		var seenBefore = localStorage.getItem(STORAGE_KEY) === '1';
-		// Primera visita: 1s, para que el logo se alcance a notar. Visitas
-		// repetidas: bastante más corto — este mínimo ya no es sobre "presentar"
-		// el logo, es solo el margen para que el Hero termine de dividir su
-		// título en letras antes de que se vea el fondo detrás del loader.
-		var MIN_VISIBLE_MS = seenBefore ? 500 : 1000;
-		var MAX_WAIT_MS = 4000;
-		var loader = document.getElementById('loader');
-		if (!loader) return;
+<script>
+	import { gsap } from 'gsap';
 
-		var shownAt = Date.now();
-		var hidden = false;
+	const STORAGE_KEY = 'juveland:loader-seen';
+	const seenBefore = localStorage.getItem(STORAGE_KEY) === '1';
+	// Primera visita: 1.3s. Visitas repetidas: más corto, pero no tan corto
+	// como para no alcanzar a ver nada del crossfade (ver el <script> de
+	// abajo) — con 500ms el loader se ocultaba justo cuando el primer
+	// crossfade apenas iba arrancando, así que nunca se veía moverse.
+	const MIN_VISIBLE_MS = seenBefore ? 900 : 1300;
+	const MAX_WAIT_MS = 4000;
 
-		var hide = function () {
+	const loader = document.getElementById('loader');
+	const imjuve = document.querySelector<HTMLElement>('.loader-logo-imjuve');
+	const pueblo = document.querySelector<HTMLElement>('.loader-logo-pueblo');
+
+	if (loader) {
+		let crossfade: ReturnType<typeof gsap.timeline> | null = null;
+
+		// Mismo patrón que Navbar/Hero/Chips/WhyAttend: dos condiciones
+		// mutuamente excluyentes que cubren el 100% de los casos.
+		gsap.matchMedia().add(
+			{
+				reduceMotion: '(prefers-reduced-motion: reduce)',
+				motionOk: '(prefers-reduced-motion: no-preference)',
+			},
+			(context) => {
+				const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+				// El loop es puramente decorativo (no hay información que perder),
+				// así que con reduced-motion se queda en su estado inicial estático
+				// (IMJUVE visible) en vez de correr el crossfade con duración cero.
+				if (reduceMotion || !imjuve || !pueblo) return;
+
+				gsap.set(pueblo, { scale: 0.92 });
+
+				// Arranca en t=0, sin pausa inicial: el loader suele estar visible
+				// muy poco tiempo (sobre todo en visitas repetidas, ver
+				// MIN_VISIBLE_MS arriba), así que cualquier demora antes del primer
+				// crossfade corre el riesgo real de que el loader se oculte antes de
+				// que se alcance a ver — exactamente el bug que reportó el usuario
+				// (con `'+=0.5'` aquí, nunca llegaba a arrancar a tiempo).
+				crossfade = gsap
+					.timeline({ repeat: -1 })
+					.to(imjuve, { opacity: 0, scale: 0.92, duration: 1.5, ease: 'power1.inOut' })
+					.to(pueblo, { opacity: 1, scale: 1, duration: 1.5, ease: 'power1.inOut' }, '<')
+					.to(imjuve, { opacity: 1, scale: 1, duration: 1.5, ease: 'power1.inOut' }, '+=0.3')
+					.to(pueblo, { opacity: 0, scale: 0.92, duration: 1.5, ease: 'power1.inOut' }, '<');
+			},
+		);
+
+		const shownAt = Date.now();
+		let hidden = false;
+
+		const hide = () => {
 			if (hidden) return;
 			hidden = true;
-			var elapsed = Date.now() - shownAt;
-			var wait = Math.max(MIN_VISIBLE_MS - elapsed, 0);
-			window.setTimeout(function () {
-				loader.style.display = 'none';
+			const elapsed = Date.now() - shownAt;
+			const wait = Math.max(MIN_VISIBLE_MS - elapsed, 0);
+
+			window.setTimeout(() => {
+				crossfade?.kill();
+				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+				gsap.to(loader, {
+					opacity: 0,
+					duration: reduceMotion ? 0.15 : 0.4,
+					ease: 'power1.out',
+					onComplete: () => {
+						loader.style.display = 'none';
+					},
+				});
 				localStorage.setItem(STORAGE_KEY, '1');
 			}, wait);
 		};
 
-		var pageLoaded =
+		const pageLoaded =
 			document.readyState === 'complete'
 				? Promise.resolve()
-				: new Promise(function (resolve) {
-						window.addEventListener('load', resolve);
-					});
+				: new Promise<void>((resolve) => window.addEventListener('load', () => resolve()));
 
 		// Ver el comentario de arriba: se espera tanto a que cargue la página
 		// como a que las fuentes estén listas, que es justo la señal que usa
@@ -94,5 +147,5 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 		// Tope de seguridad — nunca deja al usuario atorado más de 4s en
 		// conexiones lentas o si alguna de las promesas de arriba no resuelve.
 		window.setTimeout(hide, MAX_WAIT_MS);
-	})();
+	}
 </script>
