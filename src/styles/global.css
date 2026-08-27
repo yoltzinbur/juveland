@@ -54,6 +54,28 @@
 	border-color: var(--color-ink);
 }
 
+/*
+ * Variantes invertidas — para stickers que viven sobre una banda `bg-ink`
+ * (Bandas/Line-up, y probablemente el footer, DESIGN.md §6: "banda ink o
+ * cream"). El contorno/sombra normal usa `ink` porque el fondo de página es
+ * `cream`; sobre un fondo `ink` esa misma línea/sombra se vuelve invisible
+ * (ink sobre ink), así que aquí se invierte a `cream` — mismo lenguaje de
+ * sticker, solo con el rol de color al revés.
+ */
+@utility cream-outline {
+	border-style: solid;
+	border-width: 2px;
+	border-color: var(--color-cream);
+}
+
+@utility sticker-shadow-invert {
+	box-shadow: 4px 4px 0 0 var(--color-cream);
+}
+
+@utility sticker-shadow-invert-sm {
+	box-shadow: 3px 3px 0 0 var(--color-cream);
+}
+
 @layer base {
 	body {
 		@apply bg-cream font-body text-ink antialiased;

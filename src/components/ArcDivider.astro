@@ -18,6 +18,15 @@
 // `fillClass` se pasa completo desde el caller (p. ej. "fill-green") por el
 // mismo criterio que Chips.astro: el escáner estático de Tailwind solo
 // detecta clases que aparecen como texto literal en el archivo.
+//
+// El caller SIEMPRE debe agregar un margen negativo chico (`-mt-0.5` si el
+// arco cierra abajo de la banda, `-mb-0.5` si la abre arriba con
+// `rotate-180`) del lado que toca al bloque de color vecino. Sin eso, en
+// ciertas resoluciones el redondeo de sub-píxel del navegador deja una
+// franja de 1px del fondo `cream` de la página asomando entre el SVG y el
+// div — el traslape lo tapa sin que se note (misma tinta encimada), porque
+// esa franja del SVG (justo donde empieza el `path`, antes de que la curva
+// se separe de la base) siempre es relleno sólido, nunca la curva.
 interface Props {
 	fillClass: string;
 	class?: string;

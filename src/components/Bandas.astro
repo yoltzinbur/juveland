@@ -6,6 +6,28 @@
 // (mismo criterio que ya usa PLAN.md paso 8: "carrusel... se decide/prueba
 // en pasada 2 tras medir rendimiento real").
 //
+// Banda `bg-ink` de página completa (no otro color de la paleta): las 9
+// tarjetas ya son 5 tintas saturadas compitiendo entre sí, así que envolverlas
+// en, digamos, naranja pasaría de los ~3 acentos de DESIGN.md §3. `ink` no
+// compite — es el mismo neutro de contornos/texto de todo el sitio, y ya es
+// una referencia citada en DESIGN.md §1 (Qwero usa negro como una de sus
+// secciones de color plano) que no se había usado todavía. Efecto extra: las
+// tarjetas de colores resaltan como stickers sobre fondo negro en vez de
+// sumarse a la pelea de color.
+//
+// El arco de ArcDivider va ARRIBA esta vez (Trueque lo usa abajo) — mismo
+// componente, solo `rotate-180` en el `class` (la curva es simétrica
+// izquierda-derecha, así que un giro de 180° la deja apuntando para el otro
+// lado sin necesitar un segundo path). El borde plano queda abajo, sin línea
+// extra: un `border-ink` ahí sería invisible contra el propio fondo `bg-ink`
+// que tiene encima, así que no hace falta — el contraste ink→cream de la
+// sección siguiente ya es suficiente separación visual por sí solo.
+//
+// Tarjetas: `cream-outline`/`sticker-shadow-invert-sm` en vez de
+// `ink-outline`/`sticker-shadow-sm` — el contorno/sombra normal en `ink` se
+// volvería invisible sobre este fondo también `ink` (global.css tiene el
+// porqué completo).
+//
 // Mismos datos y colores que Agenda.astro (src/data/lineup.ts) para que cada
 // banda se vea con la misma tinta en ambas secciones.
 //
@@ -14,51 +36,58 @@
 // inventada ni una foto de stock), y el color de fondo real de cada tarjeta
 // ya queda listo para cuando lleguen: solo hay que cambiar el bloque del
 // ícono por <Image>, el resto de la tarjeta no se toca.
+import ArcDivider from './ArcDivider.astro';
 import { lineup } from '../data/lineup';
 ---
 
-<section id="bandas" class="px-sm py-xl">
-	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
-		<div class="flex flex-col items-center gap-2">
-			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Line-up</h2>
-			<p class="font-body text-ink/70 lg:text-lg">Las fotos de cada banda llegan muy pronto — [pendiente IMJUVE].</p>
-		</div>
+<section id="bandas" class="relative">
+	<ArcDivider fillClass="fill-ink" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 
-		<div class="grid w-full grid-cols-2 gap-sm sm:grid-cols-3 sm:gap-md">
-			{
-				lineup.map((item) => (
-					<div class={`ink-outline sticker-shadow-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}>
-						<div class="flex aspect-square flex-col items-center justify-center gap-1 border-b-2 border-ink/15">
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class={`h-7 w-7 opacity-40 sm:h-8 sm:w-8 lg:h-9 lg:w-9 ${item.text}`}
-								aria-hidden="true"
-							>
-								<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
-								<circle cx="12" cy="13" r="3.5" />
-							</svg>
-							<span
-								class={`px-1 text-center font-headline text-[9px] font-bold uppercase opacity-50 sm:text-[10px] ${item.text}`}
-							>
-								Foto próximamente
-							</span>
+	<div class="bg-ink px-sm pt-lg pb-xl">
+		<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
+			<div class="flex flex-col items-center gap-2">
+				<h2 class="font-headline text-2xl font-bold text-cream uppercase sm:text-3xl lg:text-4xl">Line-up</h2>
+				<p class="font-body text-cream/70 lg:text-lg">Las fotos de cada banda llegan muy pronto — [pendiente IMJUVE].</p>
+			</div>
+
+			<div class="grid w-full grid-cols-2 gap-sm sm:grid-cols-3 sm:gap-md">
+				{
+					lineup.map((item) => (
+						<div
+							class={`cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}
+						>
+							<div class="flex aspect-square flex-col items-center justify-center gap-1 border-b-2 border-ink/15">
+								<svg
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class={`h-7 w-7 opacity-40 sm:h-8 sm:w-8 lg:h-9 lg:w-9 ${item.text}`}
+									aria-hidden="true"
+								>
+									<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+									<circle cx="12" cy="13" r="3.5" />
+								</svg>
+								<span
+									class={`px-1 text-center font-headline text-[9px] font-bold uppercase opacity-50 sm:text-[10px] ${item.text}`}
+								>
+									Foto próximamente
+								</span>
+							</div>
+							<div class="flex flex-col gap-0.5 px-sm py-sm lg:px-md lg:py-md">
+								<span class={`font-headline text-xs font-bold uppercase opacity-70 sm:text-sm lg:text-base ${item.text}`}>
+									{item.time}
+								</span>
+								<span class={`font-headline text-sm font-bold uppercase sm:text-base lg:text-lg ${item.text}`}>
+									{item.name}
+								</span>
+							</div>
 						</div>
-						<div class="flex flex-col gap-0.5 px-sm py-sm lg:px-md lg:py-md">
-							<span class={`font-headline text-xs font-bold uppercase opacity-70 sm:text-sm lg:text-base ${item.text}`}>
-								{item.time}
-							</span>
-							<span class={`font-headline text-sm font-bold uppercase sm:text-base lg:text-lg ${item.text}`}>
-								{item.name}
-							</span>
-						</div>
-					</div>
-				))
-			}
+					))
+				}
+			</div>
 		</div>
 	</div>
 </section>

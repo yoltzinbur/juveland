@@ -1,0 +1,49 @@
+---
+// Mapa — PLAN.md Pasada 1, paso 10 / DESIGN.md §6.
+// Google Maps embebido sin API key (truco `output=embed` con una consulta de
+// texto, no coordenadas inventadas) — PLAN.md permite "coordenadas
+// aproximadas... si el link oficial de IMJUVE no ha llegado", y buscar por
+// nombre del lugar es más honesto que adivinar un lat/lng exacto.
+//
+// El "pin personalizado con mascota/bandera" de DESIGN.md §6 no es viable
+// con el embed gratuito (requiere la API de pago con marcadores JS) — en su
+// lugar, un badge 📍 decorativo junto al título cubre la misma idea sin
+// prometer una integración que no existe.
+const query = 'Alameda Municipal, Jilotepec, Estado de México';
+const encodedQuery = encodeURIComponent(query);
+---
+
+<section id="mapa" class="px-sm py-xl">
+	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
+		<div class="flex flex-col items-center gap-2">
+			<span
+				class="ink-outline sticker-shadow-sm flex h-12 w-12 items-center justify-center rounded-full bg-red text-2xl lg:h-14 lg:w-14 lg:text-3xl"
+				aria-hidden="true"
+			>
+				📍
+			</span>
+			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Cómo llegar</h2>
+			<p class="font-body text-ink/70 lg:text-lg">{query}</p>
+		</div>
+
+		<div class="ink-outline sticker-shadow w-full overflow-hidden rounded-card">
+			<iframe
+				src={`https://www.google.com/maps?q=${encodedQuery}&output=embed`}
+				title="Mapa de la Alameda de Jilotepec"
+				class="block h-72 w-full sm:h-96 lg:h-[26rem]"
+				style="border:0"
+				loading="lazy"
+				referrerpolicy="no-referrer-when-downgrade"
+			/>
+		</div>
+
+		<a
+			href={`https://www.google.com/maps/search/?api=1&query=${encodedQuery}`}
+			target="_blank"
+			rel="noopener noreferrer"
+			class="ink-outline sticker-shadow rounded-chip bg-red px-lg py-3 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-10 lg:py-4 lg:text-base"
+		>
+			Cómo llegar en Google Maps
+		</a>
+	</div>
+</section>
