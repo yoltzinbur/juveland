@@ -5,6 +5,12 @@
 // sin transición al terminar de cargar y no vuelve a mostrarse en visitas
 // repetidas (flag en localStorage) — el fundido de salida también es Pasada 2.
 //
+// El script tenía un tope MÁXIMO de espera (4s, para conexiones lentas) pero
+// ningún mínimo — en una carga rápida (que es casi siempre, el sitio pesa
+// poco) se ocultaba casi al instante, demasiado rápido para verlo incluso
+// forzando throttling. `MIN_VISIBLE_MS` garantiza que se quede en pantalla
+// al menos ese tiempo sin importar qué tan rápido termine de cargar todo.
+//
 // `loading="eager"` en los dos logos: son lo primero que se ve (antes que
 // cualquier otra cosa de la página), así que el `loading="lazy"` por
 // defecto de <Image> es contraproducente — le baja prioridad de carga a
@@ -39,6 +45,7 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 <script is:inline>
 	(function () {
 		var STORAGE_KEY = 'juveland:loader-seen';
+		var MIN_VISIBLE_MS = 1000;
 		var loader = document.getElementById('loader');
 		if (!loader) return;
 
@@ -47,9 +54,18 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 			return;
 		}
 
+		var shownAt = Date.now();
+		var hidden = false;
+
 		var hide = function () {
-			loader.style.display = 'none';
-			localStorage.setItem(STORAGE_KEY, '1');
+			if (hidden) return;
+			hidden = true;
+			var elapsed = Date.now() - shownAt;
+			var wait = Math.max(MIN_VISIBLE_MS - elapsed, 0);
+			window.setTimeout(function () {
+				loader.style.display = 'none';
+				localStorage.setItem(STORAGE_KEY, '1');
+			}, wait);
 		};
 
 		if (document.readyState === 'complete') {
