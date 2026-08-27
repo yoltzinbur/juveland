@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { Font } from 'astro:assets';
+import Analytics from '@vercel/analytics/astro';
 import Loader from '../components/Loader.astro';
 
 interface Props {
@@ -32,6 +33,7 @@ const {
 	<body>
 		{showLoader && <Loader />}
 		<slot />
+		<Analytics />
 	</body>
 </html>
 
