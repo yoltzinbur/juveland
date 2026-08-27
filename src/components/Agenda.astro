@@ -262,18 +262,35 @@ import { lineup } from '../data/lineup';
 			intervalId = setInterval(tick, 1000);
 		};
 
-		if ('IntersectionObserver' in window) {
-			const io = new IntersectionObserver(
-				(entries, obs) => {
-					if (!entries.some((entry) => entry.isIntersecting)) return;
-					obs.disconnect();
-					start();
-				},
-				{ rootMargin: '200px' },
-			);
-			io.observe(section);
-		} else {
-			start();
-		}
+		// No se empieza a observar hasta que el Loader se retira: si la sección
+		// ya está por encima de la línea de disparo del ScrollTrigger en el
+		// load, la entrada se reproduciría entera detrás del overlay del Loader
+		// (z-[100], ~1.3s) sin que nadie la vea. `whenLoaderGone` resuelve al
+		// instante si no hay Loader o si ya se ocultó; si no, espera el evento
+		// `juveland:loader-hidden` (con salvavidas por si el Loader falla).
+		const whenLoaderGone = () => {
+			const loader = document.getElementById('loader');
+			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
+			return new Promise<void>((resolve) => {
+				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
+				window.setTimeout(resolve, 4500);
+			});
+		};
+
+		whenLoaderGone().then(() => {
+			if ('IntersectionObserver' in window) {
+				const io = new IntersectionObserver(
+					(entries, obs) => {
+						if (!entries.some((entry) => entry.isIntersecting)) return;
+						obs.disconnect();
+						start();
+					},
+					{ rootMargin: '200px' },
+				);
+				io.observe(section);
+			} else {
+				start();
+			}
+		});
 	}
 </script>

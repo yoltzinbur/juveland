@@ -127,18 +127,37 @@ const chips = [
 			);
 		};
 
-		if ('IntersectionObserver' in window) {
-			const io = new IntersectionObserver(
-				(entries, obs) => {
-					if (!entries.some((entry) => entry.isIntersecting)) return;
-					obs.disconnect();
-					animate();
-				},
-				{ rootMargin: '200px' },
-			);
-			io.observe(section);
-		} else {
-			animate();
-		}
+		// No se empieza a observar hasta que el Loader se retira. #chips suele
+		// quedar ARRIBA de la línea de disparo ('top 82%') ya en el load, así
+		// que el ScrollTrigger reproduciría la entrada de inmediato — entera
+		// detrás del overlay del Loader (z-[100], ~1.3s), sin que nadie la vea
+		// (el mismo bug que tenían las letras del Hero). `whenLoaderGone`
+		// resuelve al instante si no hay Loader o si ya se ocultó; si no,
+		// espera el evento `juveland:loader-hidden` (con salvavidas por si el
+		// script del Loader falla).
+		const whenLoaderGone = () => {
+			const loader = document.getElementById('loader');
+			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
+			return new Promise<void>((resolve) => {
+				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
+				window.setTimeout(resolve, 4500);
+			});
+		};
+
+		whenLoaderGone().then(() => {
+			if ('IntersectionObserver' in window) {
+				const io = new IntersectionObserver(
+					(entries, obs) => {
+						if (!entries.some((entry) => entry.isIntersecting)) return;
+						obs.disconnect();
+						animate();
+					},
+					{ rootMargin: '200px' },
+				);
+				io.observe(section);
+			} else {
+				animate();
+			}
+		});
 	}
 </script>

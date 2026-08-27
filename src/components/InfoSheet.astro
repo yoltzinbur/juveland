@@ -74,23 +74,37 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 	const backdrop = document.getElementById(`${id}-backdrop`);
 	const closeBtn = document.getElementById(`${id}-close`);
 
+	// El botón "atrás" del teléfono cierra el diálogo en vez de salir de la
+	// página: como es una SPA de una sola URL, sin esto el back sale del sitio
+	// con el diálogo abierto. Al abrir se mete una entrada de historial y se
+	// escucha `popstate`; al cerrar por acción del usuario se deshace esa
+	// entrada con `history.back()` para no dejar basura en el historial.
+	function onPopState() {
+		closeSheet({ fromPopState: true });
+	}
+
 	const openSheet = () => {
 		sheet?.classList.remove('hidden');
 		backdrop?.classList.remove('hidden');
 		trigger?.setAttribute('aria-expanded', 'true');
 		document.body.style.overflow = 'hidden';
+		history.pushState({ sheet: id }, '');
+		window.addEventListener('popstate', onPopState);
 	};
 
-	const closeSheet = () => {
+	const closeSheet = ({ fromPopState = false } = {}) => {
+		if (sheet?.classList.contains('hidden')) return;
 		sheet?.classList.add('hidden');
 		backdrop?.classList.add('hidden');
 		trigger?.setAttribute('aria-expanded', 'false');
 		document.body.style.overflow = '';
+		window.removeEventListener('popstate', onPopState);
+		if (!fromPopState && history.state?.sheet === id) history.back();
 	};
 
 	trigger?.addEventListener('click', openSheet);
-	closeBtn?.addEventListener('click', closeSheet);
-	backdrop?.addEventListener('click', closeSheet);
+	closeBtn?.addEventListener('click', () => closeSheet());
+	backdrop?.addEventListener('click', () => closeSheet());
 
 	document.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') closeSheet();

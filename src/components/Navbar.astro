@@ -100,18 +100,31 @@ const links = [
 	const backdrop = document.getElementById('nav-backdrop');
 	const sheetLinks = document.querySelectorAll('.nav-sheet-link');
 
+	// El botón "atrás" del teléfono cierra el menú en vez de salir de la página
+	// (SPA de una sola URL): al abrir se mete una entrada de historial y se
+	// escucha `popstate`; al cerrar por acción del usuario se deshace con
+	// `history.back()`.
+	function onPopState() {
+		closeSheet({ fromPopState: true });
+	}
+
 	const openSheet = () => {
 		sheet?.classList.remove('hidden');
 		backdrop?.classList.remove('hidden');
 		toggle?.setAttribute('aria-expanded', 'true');
 		document.body.style.overflow = 'hidden';
+		history.pushState({ sheet: 'nav' }, '');
+		window.addEventListener('popstate', onPopState);
 	};
 
-	const closeSheet = () => {
+	const closeSheet = ({ fromPopState = false } = {}) => {
+		if (sheet?.classList.contains('hidden')) return;
 		sheet?.classList.add('hidden');
 		backdrop?.classList.add('hidden');
 		toggle?.setAttribute('aria-expanded', 'false');
 		document.body.style.overflow = '';
+		window.removeEventListener('popstate', onPopState);
+		if (!fromPopState && history.state?.sheet === 'nav') history.back();
 	};
 
 	toggle?.addEventListener('click', () => {
@@ -123,8 +136,26 @@ const links = [
 		}
 	});
 
-	backdrop?.addEventListener('click', closeSheet);
-	sheetLinks.forEach((link) => link.addEventListener('click', closeSheet));
+	backdrop?.addEventListener('click', () => closeSheet());
+
+	// Los links del menú saltan a una sección (#ancla). Se cierra el menú
+	// deshaciendo su entrada de historial (history.back vía closeSheet) y,
+	// cuando ese popstate ya pasó, se navega al ancla — así el historial
+	// queda [página] → [#sección] y un solo "atrás" regresa limpio, sin la
+	// entrada del menú de por medio.
+	sheetLinks.forEach((link) =>
+		link.addEventListener('click', (event) => {
+			const href = link.getAttribute('href');
+			const isOpen = toggle?.getAttribute('aria-expanded') === 'true';
+			if (isOpen && href && href.startsWith('#') && history.state?.sheet === 'nav') {
+				event.preventDefault();
+				window.addEventListener('popstate', () => { location.hash = href; }, { once: true });
+				closeSheet();
+			} else {
+				closeSheet();
+			}
+		}),
+	);
 
 	document.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') closeSheet();
