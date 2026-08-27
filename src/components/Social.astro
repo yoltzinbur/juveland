@@ -5,46 +5,9 @@
 // cuentas reales que mandó el usuario (2 IMJUVE, 2 Jilotepec/Turismo) se
 // construye la segunda opción — enlaces reales y honestos, sin inventar
 // capturas de posts que no tenemos ni fabricar contenido de esas cuentas.
+// Datos en src/data/social.ts — compartidos con Footer.astro (paso 12).
 import SocialIcon from './SocialIcon.astro';
-
-const accounts = [
-	{
-		platform: 'instagram' as const,
-		platformLabel: 'Instagram',
-		name: 'IMJUVE Jilotepec',
-		handle: '@imjuvejilo',
-		href: 'https://www.instagram.com/imjuvejilo/',
-		bg: 'bg-red',
-		text: 'text-cream',
-	},
-	{
-		platform: 'facebook' as const,
-		platformLabel: 'Facebook',
-		name: 'IMJUVE Jilotepec',
-		handle: 'Imjuve de Jilotepec',
-		href: 'https://www.facebook.com/p/Imjuve-de-Jilotepec-100027352226162/',
-		bg: 'bg-purple',
-		text: 'text-cream',
-	},
-	{
-		platform: 'facebook' as const,
-		platformLabel: 'Facebook',
-		name: 'Turismo Jilotepec',
-		handle: '@TurismoJilo',
-		href: 'https://www.facebook.com/TurismoJilo/',
-		bg: 'bg-blue',
-		text: 'text-ink',
-	},
-	{
-		platform: 'instagram' as const,
-		platformLabel: 'Instagram',
-		name: 'Jilotepec Pueblo Mágico',
-		handle: '@jilo.pueblo.magico',
-		href: 'https://www.instagram.com/jilo.pueblo.magico/',
-		bg: 'bg-green',
-		text: 'text-ink',
-	},
-];
+import { socialAccounts as accounts } from '../data/social';
 ---
 
 <section class="px-sm py-xl">

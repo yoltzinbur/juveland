@@ -1,0 +1,72 @@
+---
+// Formulario de Territorio Emprende — PLAN.md Pasada 1, paso 11 / DESIGN.md §6.
+// `id="territorio-emprende"` — el CTA del Hero y el botón del Navbar ya
+// apuntaban a este ancla desde hace varias sesiones; hasta ahora no existía
+// ninguna sección con ese id, así que esos links quedaban colgando.
+//
+// El aviso de privacidad queda visible en la página (se debe leer antes de
+// llegar al form, no escondido en el diálogo) — es un aviso informativo
+// corto y honesto, NO el aviso de privacidad oficial. Uno formal en México
+// tiene contenido legal específico (identidad del responsable, finalidades,
+// derechos ARCO, etc.) que no me corresponde redactar ni inventar, menos
+// tratándose de datos de posibles menores de edad — eso lo tiene que
+// redactar/aprobar IMJUVE antes de lanzar el formulario real.
+//
+// El CTA abre un InfoSheet (mismo componente reusable de Trueque.astro) en
+// vez de mostrar el placeholder suelto en el scroll — así la sección se ve
+// terminada y con una acción clara aunque el form en sí siga pendiente. Sin
+// el link real del Google Form de IMJUVE todavía, el slot del InfoSheet
+// tiene el mismo placeholder honesto que antes vivía en la página; en
+// cuanto llegue el link, ese bloque se reemplaza por un <iframe src={...}>
+// y nada más cambia.
+import InfoSheet from './InfoSheet.astro';
+---
+
+<section id="territorio-emprende" class="px-sm py-xl">
+	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-3xl">
+		<div class="flex flex-col items-center gap-2">
+			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Territorio Emprende</h2>
+			<p class="font-body text-ink/70 lg:text-lg">
+				Muestra o vende tu proyecto frente a todo Jilotepec — regístrate para participar.
+			</p>
+		</div>
+
+		<p
+			class="ink-outline sticker-shadow-sm w-full rounded-card bg-lime px-md py-sm text-left font-body text-sm text-ink/90 sm:text-base"
+		>
+			🔒 Este formulario va a pedir datos personales para tu registro. Si eres menor de edad, participa con la
+			autorización de mamá, papá o tutor. <span class="font-bold">[Aviso de privacidad oficial de IMJUVE: pendiente]</span>
+		</p>
+
+		<InfoSheet
+			id="territorio-emprende-form"
+			title="Regístrate en Territorio Emprende"
+			triggerLabel="Abrir formulario de registro"
+			triggerClass="ink-outline sticker-shadow rounded-chip bg-red px-lg py-3 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-10 lg:py-4 lg:text-base"
+		>
+			<!-- [pendiente el link oficial de IMJUVE] — en cuanto llegue, este
+			     bloque se reemplaza por <iframe src={formUrl} class="h-[70vh] w-full" />,
+			     el resto del InfoSheet (trigger, aviso de privacidad de arriba) no cambia. -->
+			<div class="flex flex-col items-center gap-sm py-lg text-center">
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="h-10 w-10 text-ink/30 sm:h-12 sm:w-12"
+					aria-hidden="true"
+				>
+					<rect x="5" y="3" width="14" height="18" rx="2" />
+					<path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z" />
+					<path d="M8.5 11h7M8.5 14.5h7M8.5 18h4" />
+				</svg>
+				<p class="font-headline text-sm font-bold text-ink/50 uppercase sm:text-base">
+					El formulario de registro se abre muy pronto
+				</p>
+				<p class="font-body text-xs text-ink/40 sm:text-sm">[pendiente el link oficial de IMJUVE]</p>
+			</div>
+		</InfoSheet>
+	</div>
+</section>

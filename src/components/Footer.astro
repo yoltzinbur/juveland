@@ -1,0 +1,106 @@
+---
+// Footer — PLAN.md Pasada 1, paso 12 / DESIGN.md §6, último de la Pasada 1.
+// `id="contacto"` — el link "Contacto" del Navbar apuntaba aquí desde el
+// principio y hasta ahora no existía la sección (mismo caso que
+// "territorio-emprende" en Formulario.astro).
+//
+// Banda `bg-ink` de página completa, sin arco (a diferencia de Bandas): un
+// footer es el elemento terminal de la página, no una "isla" rodeada de
+// cream por los dos lados — el corte plano de arriba tampoco necesita un
+// `border-ink` explícito, sería invisible contra su propio fondo `ink`
+// (mismo razonamiento que ya quedó documentado en Bandas.astro).
+//
+// Logos: IMJUVE y Jilotepec Pueblo Mágico son los PNG reales que ya usa
+// Loader.astro/Hero.astro. El logo del Ayuntamiento no existe en ningún
+// tamaño (ni siquiera baja res) — placeholder punteado marcado, no se
+// inventa ni se sustituye por otro logo.
+//
+// Columna de contacto: sin teléfono/correo oficial de IMJUVE, así que no se
+// inventa uno — se listan las redes reales (src/data/social.ts, compartido
+// con Social.astro) como el canal de contacto honesto que sí tenemos.
+import { Image } from 'astro:assets';
+import logoImjuve from '../assets/logo-imjuve.png';
+import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
+import mascotaVerde from '../assets/mascota-verde.png';
+import SocialIcon from './SocialIcon.astro';
+import { socialAccounts } from '../data/social';
+
+const links = [
+	{ href: '#inicio', label: 'Inicio' },
+	{ href: '#agenda', label: 'Agenda' },
+	{ href: '#territorio-emprende', label: 'Territorio Emprende' },
+	{ href: '#mapa', label: 'Mapa' },
+	{ href: '#contacto', label: 'Contacto' },
+];
+---
+
+<footer id="contacto" class="bg-ink px-sm py-xl">
+	<div class="mx-auto flex max-w-4xl flex-col gap-xl">
+		<div class="grid grid-cols-1 gap-lg text-center sm:grid-cols-3 sm:text-left">
+			<div class="flex flex-col items-center gap-2 sm:items-start">
+				<span class="font-display text-2xl font-semibold text-cream lg:text-3xl">Juveland</span>
+				<p class="font-body text-sm text-cream/70 lg:text-base">
+					1er Festival de las Juventudes de Jilotepec — sábado 29 de agosto, Alameda de Jilotepec.
+				</p>
+			</div>
+
+			<div class="flex flex-col items-center gap-2 sm:items-start">
+				<span class="font-headline text-xs font-bold tracking-wide text-cream/50 uppercase lg:text-sm">Navegación</span>
+				<ul class="flex flex-col items-center gap-1 sm:items-start">
+					{
+						links.map((link) => (
+							<li>
+								<a
+									href={link.href}
+									class="font-body text-sm text-cream/80 transition-colors hover:text-lime lg:text-base"
+								>
+									{link.label}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</div>
+
+			<div class="flex flex-col items-center gap-2 sm:items-start">
+				<span class="font-headline text-xs font-bold tracking-wide text-cream/50 uppercase lg:text-sm">Contacto</span>
+				<p class="font-body text-sm text-cream/80 lg:text-base">Escríbenos por redes:</p>
+				<div class="flex items-center gap-2">
+					{
+						socialAccounts.map((account) => (
+							<a
+								href={account.href}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={`${account.platformLabel}: ${account.name}`}
+								class={`cream-outline flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-150 ease-out hover:-translate-y-0.5 lg:h-10 lg:w-10 ${account.bg}`}
+							>
+								<SocialIcon name={account.platform} class={`h-4 w-4 lg:h-5 lg:w-5 ${account.text}`} />
+							</a>
+						))
+					}
+				</div>
+			</div>
+		</div>
+
+		<div class="flex flex-col items-center gap-md border-t border-cream/15 pt-lg">
+			<div class="flex flex-wrap items-center justify-center gap-lg">
+				<Image src={logoImjuve} alt="Logo de IMJUVE Jilotepec" width={100} class="h-auto w-16 lg:w-20" />
+				<Image src={logoPuebloMagico} alt="Logo de Jilotepec, Pueblo Mágico" width={100} class="h-auto w-16 lg:w-20" />
+				<div
+					class="flex h-12 w-16 flex-col items-center justify-center rounded-button border-2 border-dashed border-cream/30 lg:h-14 lg:w-20"
+				>
+					<span class="font-headline text-[9px] font-bold text-cream/50 uppercase lg:text-[10px]">Ayuntamiento</span>
+					<span class="font-body text-[8px] text-cream/30 lg:text-[9px]">[pendiente logo]</span>
+				</div>
+			</div>
+
+			<div class="flex flex-col items-center gap-xs text-center">
+				<Image src={mascotaVerde} alt="" width={80} class="h-auto w-8 opacity-80 lg:w-10" />
+				<p class="font-body text-xs text-cream/40 lg:text-sm">
+					© 2026 Juveland — 1er Festival de las Juventudes de Jilotepec, IMJUVE.
+				</p>
+			</div>
+		</div>
+	</div>
+</footer>
