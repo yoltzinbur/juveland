@@ -15,7 +15,13 @@
 import { lineup } from '../data/lineup';
 ---
 
-<section id="agenda" class="px-sm py-xl">
+<!-- `overflow-x-clip`: las tiras de la agenda entran con `x: ±60` vía
+     gsap.from, que se pinta en immediateRender apenas carga la página (mucho
+     antes de que el ScrollTrigger dispare), así que asoman fuera del borde
+     derecho y aparece scroll horizontal en móvil hasta que la animación
+     corre. `clip` lo contiene sin crear contenedor de scroll ni tocar el eje
+     vertical. -->
+<section id="agenda" class="overflow-x-clip px-sm py-xl">
 	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md lg:max-w-3xl">
 		<div class="agenda-heading flex flex-col items-center gap-2 text-center">
 			<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">¡Ya casi!</h2>
