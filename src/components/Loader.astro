@@ -4,6 +4,12 @@
 // otro (el crossfade+escala entre ellos es Pasada 2, DESIGN.md §7). Se oculta
 // sin transición al terminar de cargar y no vuelve a mostrarse en visitas
 // repetidas (flag en localStorage) — el fundido de salida también es Pasada 2.
+//
+// `loading="eager"` en los dos logos: son lo primero que se ve (antes que
+// cualquier otra cosa de la página), así que el `loading="lazy"` por
+// defecto de <Image> es contraproducente — le baja prioridad de carga a
+// algo que ya está en pantalla. El audit de Astro marca esto como
+// "unoptimized loading attribute" en cualquier imagen arriba del pliegue.
 import { Image } from 'astro:assets';
 import logoImjuve from '../assets/logo-imjuve.png';
 import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
@@ -11,9 +17,21 @@ import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 
 <div id="loader" class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-md bg-cream px-sm">
 	<div class="flex items-center gap-md sm:gap-lg">
-		<Image src={logoImjuve} alt="Logo de IMJUVE Jilotepec" width={140} class="h-auto w-20 sm:w-28 lg:w-32" />
+		<Image
+			src={logoImjuve}
+			alt="Logo de IMJUVE Jilotepec"
+			width={140}
+			loading="eager"
+			class="h-auto w-20 sm:w-28 lg:w-32"
+		/>
 		<span class="font-display text-2xl text-ink/30 sm:text-3xl lg:text-4xl" aria-hidden="true">×</span>
-		<Image src={logoPuebloMagico} alt="Logo de Jilotepec, Pueblo Mágico" width={140} class="h-auto w-20 sm:w-28 lg:w-32" />
+		<Image
+			src={logoPuebloMagico}
+			alt="Logo de Jilotepec, Pueblo Mágico"
+			width={140}
+			loading="eager"
+			class="h-auto w-20 sm:w-28 lg:w-32"
+		/>
 	</div>
 	<p class="font-headline text-xs font-bold tracking-wide text-ink/50 uppercase">Cargando…</p>
 </div>

@@ -67,8 +67,7 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 					nuestro Croquetón, dentro de Trueque con Huella.
 				</p>
 				<p>
-					La idea es muy sencilla: además de ir a disfrutar de música, arte, emprendimiento y todas las actividades del
-					festival, queremos aprovechar que estaremos reunidos para hacer algo bueno por nuestro municipio y por
+					La idea es muy sencilla: queremos aprovechar que estaremos reunidos para hacer algo bueno por nuestro municipio y por
 					quienes también necesitan de nosotros. 🐶🐱
 				</p>
 				<p>
@@ -80,34 +79,25 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 					Además, dentro de Trueque con Huella 🌱 también podrán llevar papel para reciclar y participar en nuestra
 					dinámica de intercambio de árboles.
 				</p>
-				<p>
-					📅 Sáb 29 de agosto 📍 Alameda de Jilotepec 🎡 JUVELAND 2026 · Primera edición
-				</p>
-				<p>
-					Y aquí también queremos pedirles muchísimo su ayuda: 🙌🏼 ¿nos ayudan a compartir el flyer en sus grupos,
-					escuelas, comunidades y redes sociales? Queremos que esta invitación llegue a muchas más personas y que
-					entre todos hagamos crecer el Croquetón. 🐾
-				</p>
 				<p>Aunque alguien no pueda donar, compartir también es una forma de ayudar. ✨</p>
 				<p class="font-headline font-bold text-ink uppercase">
 					Queremos que el primer JUVELAND no solamente se disfrute…<br />
 					Queremos que también deje huella.
 				</p>
-				<p>¡Nos vemos el sábado! 🎡</p>
 			</InfoSheet>
 
 			<p
-				class="ink-outline sticker-shadow-sm w-fit rounded-chip bg-cream px-sm py-1 font-headline text-xs font-bold text-ink uppercase sm:text-sm lg:text-base"
+				class="ink-outline sticker-shadow-sm w-fit rounded-chip bg-cream px-sm py-1 font-headline text-xs font-bold text-ink text-center uppercase sm:text-sm lg:text-base"
 			>
 				📅 Sáb 29 de agosto 📍 Alameda de Jilotepec 🎡 JUVELAND 2026 · Primera edición
 			</p>
 
-			<div class="mt-xs flex flex-wrap items-center gap-sm">
+			<div class="mt-xs flex flex-col gap-sm sm:flex-row">
 				<button
 					type="button"
 					id="trueque-share-btn"
 					data-share-text={shareText}
-					class="ink-outline sticker-shadow rounded-chip bg-ink px-lg py-3 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-10 lg:py-4 lg:text-base"
+					class="ink-outline sticker-shadow flex-1 rounded-chip bg-ink px-lg py-3 text-center font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-10 lg:py-4 lg:text-base"
 				>
 					Comparte esta invitación
 				</button>
@@ -116,7 +106,7 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 					href={whatsappHref}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="ink-outline sticker-shadow-sm rounded-chip bg-cream px-md py-2 font-headline text-sm font-bold text-ink uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-lg lg:py-3 lg:text-base"
+					class="ink-outline sticker-shadow-sm flex-1 rounded-chip bg-cream px-md py-2 text-center font-headline text-sm font-bold text-ink uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none lg:px-lg lg:py-3 lg:text-base"
 				>
 					WhatsApp
 				</a>

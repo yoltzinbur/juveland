@@ -23,6 +23,9 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# playwright mcp working files (snapshots, screenshots)
+.playwright-mcp/
+
 # claude
 CLAUDE.md
 .claude

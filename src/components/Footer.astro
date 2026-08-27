@@ -10,17 +10,18 @@
 // `border-ink` explícito, sería invisible contra su propio fondo `ink`
 // (mismo razonamiento que ya quedó documentado en Bandas.astro).
 //
-// Logos: IMJUVE y Jilotepec Pueblo Mágico son los PNG reales que ya usa
-// Loader.astro/Hero.astro. El logo del Ayuntamiento no existe en ningún
-// tamaño (ni siquiera baja res) — placeholder punteado marcado, no se
-// inventa ni se sustituye por otro logo.
+// Logos: los PNG de IMJUVE/Pueblo Mágico que ya usa Loader.astro son la
+// versión reconstruida de un wrapper SVG sin vector real (DESIGN.md §9) —
+// calidad de por sí discutible, y aquí en el footer, en fila junto a otros
+// logos "oficiales", se nota más que en el loader. El usuario pidió
+// quitarlos hasta tener los buenos. Los tres logos (IMJUVE, Pueblo Mágico,
+// Ayuntamiento) quedan como el mismo placeholder punteado — ninguno se
+// inventa ni se sustituye por una versión de menor calidad.
 //
 // Columna de contacto: sin teléfono/correo oficial de IMJUVE, así que no se
 // inventa uno — se listan las redes reales (src/data/social.ts, compartido
 // con Social.astro) como el canal de contacto honesto que sí tenemos.
 import { Image } from 'astro:assets';
-import logoImjuve from '../assets/logo-imjuve.png';
-import logoPuebloMagico from '../assets/logo-pueblo-magico.png';
 import mascotaVerde from '../assets/mascota-verde.png';
 import SocialIcon from './SocialIcon.astro';
 import { socialAccounts } from '../data/social';
@@ -32,6 +33,8 @@ const links = [
 	{ href: '#mapa', label: 'Mapa' },
 	{ href: '#contacto', label: 'Contacto' },
 ];
+
+const pendingLogos = ['IMJUVE', 'Pueblo Mágico', 'Ayuntamiento'];
 ---
 
 <footer id="contacto" class="bg-ink px-sm py-xl">
@@ -85,14 +88,14 @@ const links = [
 
 		<div class="flex flex-col items-center gap-md border-t border-cream/15 pt-lg">
 			<div class="flex flex-wrap items-center justify-center gap-lg">
-				<Image src={logoImjuve} alt="Logo de IMJUVE Jilotepec" width={100} class="h-auto w-16 lg:w-20" />
-				<Image src={logoPuebloMagico} alt="Logo de Jilotepec, Pueblo Mágico" width={100} class="h-auto w-16 lg:w-20" />
-				<div
-					class="flex h-12 w-16 flex-col items-center justify-center rounded-button border-2 border-dashed border-cream/30 lg:h-14 lg:w-20"
-				>
-					<span class="font-headline text-[9px] font-bold text-cream/50 uppercase lg:text-[10px]">Ayuntamiento</span>
-					<span class="font-body text-[8px] text-cream/30 lg:text-[9px]">[pendiente logo]</span>
-				</div>
+				{
+					pendingLogos.map((name) => (
+						<div class="flex h-12 w-16 flex-col items-center justify-center rounded-button border-2 border-dashed border-cream/30 lg:h-14 lg:w-20">
+							<span class="font-headline text-[9px] font-bold text-cream/50 uppercase lg:text-[10px]">{name}</span>
+							<span class="font-body text-[8px] text-cream/30 lg:text-[9px]">Logo próximamente</span>
+						</div>
+					))
+				}
 			</div>
 
 			<div class="flex flex-col items-center gap-xs text-center">

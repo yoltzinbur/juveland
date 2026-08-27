@@ -2,6 +2,11 @@
 // Navbar — DESIGN.md §6. Píldora cream sticky, links a las secciones (se agregan
 // sus `id` conforme se construyen en las siguientes sesiones de PLAN.md).
 // Encogerse + más sombra al hacer scroll es Pasada 2 (GSAP) — aquí queda estático.
+//
+// `loading="eager"` en la mascota: el navbar es sticky y visible desde el
+// primer frame, así que el `loading="lazy"` por defecto de <Image> no aplica
+// (le baja prioridad a algo ya en pantalla) — mismo criterio que Loader.astro
+// y Hero.astro.
 import { Image } from 'astro:assets';
 import mascotaMostaza from '../assets/mascota-mostaza.png';
 
@@ -24,14 +29,20 @@ const links = [
 			class="flex shrink-0 items-center gap-2 font-display text-lg font-semibold text-ink lg:text-xl"
 			aria-label="Juveland, ir al inicio"
 		>
-			<Image src={mascotaMostaza} alt="" width={64} class="h-8 w-8 shrink-0 lg:h-9 lg:w-9" />
+			<Image
+				src={mascotaMostaza}
+				alt=""
+				width={64}
+				loading="eager"
+				class="h-8 w-8 shrink-0 -scale-x-100 lg:h-9 lg:w-9"
+			/>
 			Juveland
 		</a>
 
 		<ul class="hidden items-center gap-lg font-headline text-sm font-semibold tracking-wide text-ink uppercase md:flex lg:text-base">
 			{
 				links.map((link) => (
-					<li>
+					<li class="text-center">
 						<a href={link.href} class="transition-colors hover:text-red">
 							{link.label}
 						</a>
@@ -39,13 +50,6 @@ const links = [
 				))
 			}
 		</ul>
-
-		<a
-			href="#territorio-emprende"
-			class="ink-outline sticker-shadow-sm hidden shrink-0 rounded-chip bg-red px-md py-2 font-headline text-sm font-bold text-cream uppercase transition-transform duration-150 ease-out hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-none md:inline-block lg:px-lg lg:py-3 lg:text-base"
-		>
-			Regístrate
-		</a>
 
 		<button
 			type="button"

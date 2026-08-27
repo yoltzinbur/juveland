@@ -4,6 +4,14 @@
 // estáticas (sin loop de flotación / parallax todavía — eso es Pasada 2,
 // DESIGN.md §7), insignia + stat en las esquinas en desktop y como chips en
 // línea en móvil para no saturar una pantalla chica con overlays absolutos.
+//
+// Las 3 <Image> de mascotas llevan `loading="eager"`: el Hero es la primera
+// sección de la página, así que todas están arriba del pliegue desde el
+// primer frame — el `loading="lazy"` por defecto de <Image> les baja
+// prioridad de carga sin necesidad (el audit de Astro lo marca como
+// "unoptimized loading attribute"). Mismo criterio en Loader.astro y
+// Navbar.astro; el guiño de mascota del Footer, en cambio, sí se queda en
+// lazy (por defecto) porque ese sí vive muy abajo del pliegue real.
 import { Image } from 'astro:assets';
 import Cloud from './Cloud.astro';
 import mascotaVerde from '../assets/mascota-verde.png';
@@ -12,17 +20,26 @@ import mascotaMostaza from '../assets/mascota-mostaza.png';
 
 <section id="inicio" class="relative overflow-hidden px-sm pt-lg pb-xl sm:pt-xl">
 	<Cloud class="pointer-events-none absolute top-6 left-2 w-16 opacity-90 sm:top-8 sm:left-6 sm:w-24 md:w-28 lg:w-32" />
-	<Cloud class="pointer-events-none absolute top-14 right-4 hidden w-14 opacity-80 sm:block md:right-12 md:w-20 lg:w-24" />
+	<!-- Esta nube va visible en TODO ancho angosto (igual que la de la
+	     izquierda, sin gating de `hidden`) y solo se oculta desde 830px, que es
+	     cuando aparece el cluster de insignia/mascota/fecha de la esquina y ya
+	     no hace falta — antes de eso quedaba encimada detrás del círculo de la
+	     insignia. `min-[830px]:hidden` es seguro aquí (sin ninguna otra
+	     variante de `display` en la misma clase compitiendo por la cascada).
+	     Tamaños calcados de la nube izquierda (w-16/sm:w-24/md:w-28) para que
+	     no se sienta más chica que su pareja del otro lado. -->
+	<Cloud class="pointer-events-none absolute top-14 right-4 w-16 opacity-80 sm:w-24 md:right-12 md:w-28 min-[830px]:hidden" />
 
 	<Image
 		src={mascotaVerde}
 		alt=""
 		width={240}
+		loading="eager"
 		class="pointer-events-none absolute bottom-4 left-2 h-auto w-14 sm:bottom-8 sm:left-6 sm:w-20 md:w-24 lg:w-28"
 	/>
 
 	<div class="relative mx-auto flex max-w-3xl flex-col items-center gap-md text-center lg:max-w-4xl">
-		<span class="ink-outline sticker-shadow-sm rounded-chip bg-cream px-md py-2 font-headline text-xs font-bold text-ink uppercase tracking-wide sm:hidden">
+		<span class="ink-outline sticker-shadow-sm rounded-chip bg-cream px-md py-2 font-headline text-xs font-bold text-ink uppercase tracking-wide min-[830px]:hidden">
 			1er Festival · IMJUVE Jilotepec
 		</span>
 
@@ -44,18 +61,46 @@ import mascotaMostaza from '../assets/mascota-mostaza.png';
 			Regístrate en Territorio Emprende
 		</a>
 
-		<span class="ink-outline sticker-shadow-sm rounded-chip bg-lime px-md py-2 font-headline text-xs font-bold text-ink uppercase sm:hidden">
+		<span class="ink-outline sticker-shadow-sm rounded-chip bg-lime px-md py-2 font-headline text-xs font-bold text-ink uppercase min-[830px]:hidden">
 			Sáb 29 · 2:00 PM
 		</span>
 	</div>
 
-	<div class="absolute top-8 right-sm bottom-sm hidden flex-col items-end justify-between sm:flex">
+	<!-- Mascota mostaza espejo de la verde (abajo-izquierda) pero abajo-derecha
+	     — visible en TODO ancho angosto igual que la verde (sin gating de
+	     `hidden`, mismo criterio que la nube de arriba) y se oculta solo desde
+	     830px, que es cuando el cluster de la esquina toma el relevo. Anclada
+	     abajo del todo, en la misma franja de padding que la verde, para no
+	     chocar con el bloque de texto centrado (que no llega hasta el borde
+	     inferior). Tamaños calcados de la mascota verde (w-14/sm:w-20/md:w-24)
+	     para que coincidan en todo momento con su pareja del otro lado. -->
+	<Image
+		src={mascotaMostaza}
+		alt=""
+		width={200}
+		loading="eager"
+		class="pointer-events-none absolute right-2 bottom-4 w-14 opacity-90 sm:right-6 sm:bottom-8 sm:w-20 md:w-24 min-[830px]:hidden"
+	/>
+
+	<!-- Insignia + mascota + tarjeta de fecha en la esquina — antes aparecía
+	     desde sm: (640px), pero entre 640-830px la mascota mostaza se encimaba
+	     con las letras de JUVELAND (poco espacio horizontal para el texto
+	     centrado + el cluster absoluto a la derecha). 830px es el punto donde
+	     ya no chocan; por debajo, se queda el layout tipo chip (insignia arriba
+	     del título, tarjeta de fecha debajo del CTA) igual que en móvil. -->
+	<div class="absolute top-8 right-sm bottom-sm hidden flex-col items-end justify-between min-[830px]:flex">
 		<div class="sticker-shadow rounded-full">
 			<svg viewBox="0 0 120 120" class="h-24 w-24 md:h-28 md:w-28 lg:h-32 lg:w-32" role="img" aria-label="1er Festival, IMJUVE Jilotepec">
 				<circle cx="60" cy="60" r="57" class="fill-cream stroke-ink" stroke-width="2" />
-				<path id="hero-badge-ring" d="M60,16 A44,44 0 1,1 59.99,16" fill="none" />
-				<text class="fill-ink font-headline" font-size="9" font-weight="700" letter-spacing="0.5">
-					<textPath href="#hero-badge-ring">1ER FESTIVAL • IMJUVE JILOTEPEC •</textPath>
+				<!-- Antes el texto envolvía el círculo completo (path cerrado de
+				     360°), así que la mitad de las letras — las de los costados y
+				     abajo — quedaban de lado o boca abajo. Este path solo cubre un
+				     arco de ~160° arriba (de las 10 a las 2, aprox.), así el texto
+				     entero se lee de izquierda a derecha, casi horizontal en todo
+				     momento. -->
+				<path id="hero-badge-ring" d="M17,52 A44,44 0 0,1 103,52" fill="none" />
+				<text class="fill-ink font-headline" font-size="8" font-weight="700" letter-spacing="0.3" text-anchor="middle">
+					<textPath href="#hero-badge-ring" startOffset="51%">• 1ER FESTIVAL • JUVELAND •</textPath>
 				</text>
 				<path
 					d="M60,38 L70,50 L82,60 L70,70 L60,82 L50,70 L38,60 L50,50 Z"
@@ -66,7 +111,13 @@ import mascotaMostaza from '../assets/mascota-mostaza.png';
 			</svg>
 		</div>
 
-		<Image src={mascotaMostaza} alt="" width={200} class="pointer-events-none h-auto w-14 sm:w-16 md:w-20 lg:w-24" />
+		<Image
+			src={mascotaMostaza}
+			alt=""
+			width={200}
+			loading="eager"
+			class="pointer-events-none h-auto w-14 sm:w-16 md:w-20 lg:w-24"
+		/>
 
 		<div class="ink-outline sticker-shadow flex flex-col items-center rounded-card bg-lime px-md py-sm lg:px-lg lg:py-md">
 			<span class="font-headline text-2xl font-extrabold text-ink uppercase lg:text-3xl">Sáb 29</span>

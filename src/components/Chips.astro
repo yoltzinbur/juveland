@@ -2,8 +2,13 @@
 // Chips de intro — PLAN.md Pasada 1, paso 4 / DESIGN.md §6.
 // 5 círculos (Arte, Música, Emprendimiento, Expresión, Convivencia), cada uno
 // con tinta de acento distinta y contorno ink, ícono + label debajo (patrón
-// Alldae/Qwero confirmado en DESIGN.md). Fila centrada en desktop, scroll-snap
-// horizontal en móvil para no aplastar 5 círculos en una pantalla chica.
+// Alldae/Qwero confirmado en DESIGN.md).
+//
+// `flex-wrap` en vez del scroll-snap horizontal que tenía antes (PLAN.md
+// sugería scroll-snap en móvil, pero no gustó el resultado): las tarjetas que
+// no caben en la fila bajan a una segunda fila, centradas, sin scroll ni
+// necesidad de puntos de corte a medida — se acomoda solo según el ancho
+// real disponible en cualquier tamaño de pantalla.
 //
 // bg/stroke se listan como literales completos a propósito (mismo criterio
 // que style-guide.astro): el escáner estático de Tailwind solo detecta clases
@@ -26,12 +31,10 @@ const chips = [
 		<p class="font-body text-ink/70 lg:text-lg">Un solo día, un mismo lugar, de todo un poco.</p>
 	</div>
 
-	<div
-		class="mt-lg flex snap-x snap-mandatory gap-md overflow-x-auto px-sm pb-sm sm:mx-auto sm:max-w-4xl sm:snap-none sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0 lg:max-w-5xl"
-	>
+	<div class="mx-auto mt-lg flex max-w-4xl flex-wrap justify-center gap-md lg:max-w-5xl">
 		{
 			chips.map((chip) => (
-				<div class="flex w-24 shrink-0 snap-center flex-col items-center gap-sm sm:w-28 lg:w-32">
+				<div class="flex w-24 flex-col items-center gap-sm sm:w-28 lg:w-32">
 					<div
 						class={`ink-outline sticker-shadow flex h-20 w-20 shrink-0 items-center justify-center rounded-full sm:h-24 sm:w-24 lg:h-28 lg:w-28 ${chip.bg}`}
 					>
