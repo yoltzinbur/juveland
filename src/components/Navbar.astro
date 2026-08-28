@@ -114,14 +114,14 @@ const links = [
 		window.addEventListener('popstate', onPopState);
 	};
 
-	const closeSheet = ({ fromPopState = false } = {}) => {
+	const closeSheet = ({ fromPopState = false, keepHistory = false } = {}) => {
 		if (sheet?.classList.contains('hidden')) return;
 		sheet?.classList.add('hidden');
 		backdrop?.classList.add('hidden');
 		toggle?.setAttribute('aria-expanded', 'false');
 		document.body.style.overflow = '';
 		window.removeEventListener('popstate', onPopState);
-		if (!fromPopState && history.state?.sheet === 'nav') history.back();
+		if (!fromPopState && !keepHistory && history.state?.sheet === 'nav') history.back();
 	};
 
 	toggle?.addEventListener('click', () => {
@@ -135,22 +135,28 @@ const links = [
 
 	backdrop?.addEventListener('click', () => closeSheet());
 
-	// Los links del menú saltan a una sección (#ancla). Se cierra el menú
-	// deshaciendo su entrada de historial (history.back vía closeSheet) y,
-	// cuando ese popstate ya pasó, se navega al ancla — así el historial
-	// queda [página] → [#sección] y un solo "atrás" regresa limpio, sin la
-	// entrada del menú de por medio.
+	// Los links del menú saltan a una sección (#ancla). NO se cierra con
+	// history.back(): al volver atrás el navegador restaura la posición de
+	// scroll previa (arriba del todo) *después* del popstate, pisando el
+	// salto al ancla — la URL cambiaba a #agenda pero la página se quedaba
+	// en su lugar. En su lugar se reemplaza la entrada del menú por la de la
+	// sección y se hace el scroll a mano: el historial queda [página] →
+	// [#sección] y un solo "atrás" regresa limpio.
 	sheetLinks.forEach((link) =>
 		link.addEventListener('click', (event) => {
 			const href = link.getAttribute('href');
-			const isOpen = toggle?.getAttribute('aria-expanded') === 'true';
-			if (isOpen && href && href.startsWith('#') && history.state?.sheet === 'nav') {
-				event.preventDefault();
-				window.addEventListener('popstate', () => { location.hash = href; }, { once: true });
+			if (!href || !href.startsWith('#')) {
 				closeSheet();
-			} else {
-				closeSheet();
+				return;
 			}
+			event.preventDefault();
+			if (history.state?.sheet === 'nav') {
+				history.replaceState(null, '', href);
+			} else {
+				history.pushState(null, '', href);
+			}
+			closeSheet({ keepHistory: true });
+			document.getElementById(href.slice(1))?.scrollIntoView({ block: 'start' });
 		}),
 	);
 

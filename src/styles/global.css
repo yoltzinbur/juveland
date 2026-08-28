@@ -77,6 +77,20 @@
 }
 
 @layer base {
+	/* El navbar es `sticky top-4` (~5rem de alto con el gap): sin esto el salto
+	 * a una sección (#ancla, menú y links de escritorio) deja el encabezado
+	 * debajo de la píldora. `scrollIntoView` y los anclas nativos respetan
+	 * este padding del contenedor de scroll. */
+	html {
+		scroll-padding-top: 6rem;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
+	}
+
 	body {
 		@apply bg-cream font-body text-ink antialiased;
 	}
