@@ -40,19 +40,30 @@
 // no se nota y evita servir 90-140KB por logo en la variante grande — la
 // prioridad #1 del sitio es cargar rápido en celular (DESIGN.md).
 //
-// Sin isla de GSAP — esto es Pasada 1 (PLAN.md). El fade+rise de entrada queda
-// para Pasada 2, copiando entonces la isla diferida de Bandas.astro.
+// Animación de entrada (isla propia al final): mismo "abanico" de mazo de
+// cartas que Bandas.astro — las tarjetas entran alternando rotación ±10° con
+// `back.out`, como si se repartieran. GSAP + ScrollTrigger se importan en
+// diferido (import() dinámico cuando la sección se acerca al viewport) y solo
+// después de que se retira el Loader; respeta `prefers-reduced-motion` (cae a
+// un fade+rise plano). El contenido es legible aunque el JS falle o tarde.
 import { Image } from 'astro:assets';
 import ArcDivider from './ArcDivider.astro';
 import { emprendedores } from '../data/emprendedores';
 ---
 
-<section id="emprendedores" class="relative">
+<!-- `overflow-x-clip`: la animación de entrada rota las tarjetas ±10° (gsap.from,
+     que se pinta en immediateRender apenas carga la página, antes de que el
+     ScrollTrigger dispare), así que las esquinas giradas asoman por el borde
+     derecho y aparece scroll horizontal en móvil hasta que la animación
+     termina. `clip` lo contiene sin crear un contenedor de scroll ni afectar
+     el eje vertical (a diferencia de `overflow-hidden`, que recortaría el
+     arco). Mismo criterio que Bandas/Agenda. -->
+<section id="emprendedores" class="relative overflow-x-clip">
 	<ArcDivider fillClass="fill-green" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 
 	<div class="border-b-4 border-ink bg-green px-sm pt-lg pb-xl">
 		<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
-			<div class="flex flex-col items-center gap-2">
+			<div class="emprendedores-heading flex flex-col items-center gap-2">
 				<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Emprendedores</h2>
 				<p class="font-body text-ink/80 lg:text-lg">Los proyectos que estarán en Territorio Emprende.</p>
 			</div>
@@ -65,7 +76,7 @@ import { emprendedores } from '../data/emprendedores';
 			<div class="grid w-full grid-cols-2 gap-sm sm:gap-md md:grid-cols-5">
 				{
 					emprendedores.map((item) => (
-						<div class="ink-outline sticker-shadow-sm flex flex-col items-center gap-xs rounded-card bg-cream p-sm lg:p-md">
+						<div class="emprendedor-card ink-outline sticker-shadow-sm flex flex-col items-center gap-xs rounded-card bg-cream p-sm lg:p-md">
 							<div class="flex h-28 w-full items-center justify-center lg:h-32">
 								<Image
 									src={item.logo}
@@ -86,3 +97,110 @@ import { emprendedores } from '../data/emprendedores';
 		</div>
 	</div>
 </section>
+
+<script>
+	// Pasada 2 (PLAN.md) — mismo "abanico" (rotación alternada + acomodo con
+	// `back.out`) que Bandas.astro, para que las dos secciones de tarjetas
+	// tengan el mismo lenguaje de entrada. Aislado en su propia isla de Astro.
+	//
+	// Afinación de rendimiento (mismo criterio que Bandas/Chips/Agenda): GSAP +
+	// ScrollTrigger NO se importan estático — esta sección está bajo el pliegue,
+	// así que entran con import() dinámico recién cuando se acerca al viewport
+	// (IntersectionObserver, rootMargin 200px). El chunk de GSAP ya lo trae
+	// Hero/Navbar de forma estática, así que el import() resuelve desde caché;
+	// lo que se difiere es el trabajo (registerPlugin, timeline + ScrollTrigger,
+	// el immediateRender de los .from() que empujan las tarjetas rotadas fuera
+	// del viewport — ver overflow-x-clip en el <section>), no la descarga.
+	const section = document.querySelector<HTMLElement>('#emprendedores');
+
+	if (section) {
+		const animate = async () => {
+			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+			]);
+			gsap.registerPlugin(ScrollTrigger);
+
+			const heading = section.querySelector<HTMLElement>('.emprendedores-heading');
+			const cards = Array.from(section.querySelectorAll<HTMLElement>('.emprendedor-card'));
+
+			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
+			gsap.matchMedia().add(
+				{
+					reduceMotion: '(prefers-reduced-motion: reduce)',
+					motionOk: '(prefers-reduced-motion: no-preference)',
+				},
+				(context) => {
+					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+
+					const tl = gsap.timeline({
+						scrollTrigger: {
+							trigger: section,
+							start: 'top 78%',
+							toggleActions: 'play none none reverse',
+						},
+					});
+
+					if (heading) {
+						tl.from(heading, {
+							opacity: 0,
+							y: reduceMotion ? 0 : 16,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'power2.out',
+						});
+					}
+
+					if (cards.length) {
+						// Alterna la rotación de entrada (izquierda/derecha) tarjeta por
+						// tarjeta, como si se repartieran de un mazo — `back.out` para que
+						// se sientan "acomodándose" al llegar, no solo deteniéndose.
+						tl.from(
+							cards,
+							{
+								opacity: 0,
+								y: reduceMotion ? 0 : 30,
+								scale: reduceMotion ? 1 : 0.8,
+								rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
+								duration: reduceMotion ? 0.3 : 0.6,
+								ease: 'back.out(1.6)',
+								stagger: reduceMotion ? 0 : 0.06,
+							},
+							reduceMotion ? undefined : '-=0.25',
+						);
+					}
+				},
+			);
+		};
+
+		// No se empieza a observar hasta que el Loader se retira: si la sección
+		// ya está por encima de la línea de disparo del ScrollTrigger en el load,
+		// la entrada se reproduciría entera detrás del overlay del Loader.
+		// `whenLoaderGone` resuelve al instante si no hay Loader o si ya se
+		// ocultó; si no, espera el evento `juveland:loader-hidden` (con
+		// salvavidas por si el Loader falla).
+		const whenLoaderGone = () => {
+			const loader = document.getElementById('loader');
+			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
+			return new Promise<void>((resolve) => {
+				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
+				window.setTimeout(resolve, 4500);
+			});
+		};
+
+		whenLoaderGone().then(() => {
+			if ('IntersectionObserver' in window) {
+				const io = new IntersectionObserver(
+					(entries, obs) => {
+						if (!entries.some((entry) => entry.isIntersecting)) return;
+						obs.disconnect();
+						animate();
+					},
+					{ rootMargin: '200px' },
+				);
+				io.observe(section);
+			} else {
+				animate();
+			}
+		});
+	}
+</script>

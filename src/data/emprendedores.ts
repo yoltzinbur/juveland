@@ -34,7 +34,7 @@ export const emprendedores: Emprendedor[] = [
 	{ name: 'Coffee Milk', logo: coffeeMilk },
 	{ name: 'Fredhyloramas', logo: fredhyloramas },
 	{ name: 'JiloPrint 3D', logo: jiloprint3d },
-	{ name: 'Las Botachelas & Drinks', logo: lasBotachelas },
+	{ name: 'Las Botachelas', logo: lasBotachelas },
 	{ name: 'MicheDrinks', logo: michedrinks },
 	{ name: 'Octli Xilotl', logo: octliXilotl },
 	{ name: 'Ropa Aguilar', logo: ropaAguilar },
