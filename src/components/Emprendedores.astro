@@ -1,0 +1,88 @@
+---
+// Emprendedores — muro de logos de los proyectos ya confirmados para Territorio
+// Emprende. Va JUSTO ANTES de la sección de registro (Formulario.astro): sirve
+// de prueba social ("estos ya son parte") que ancla el CTA de al lado
+// ("¿Quieres formar parte?").
+//
+// Marco: banda `bg-green` de página completa — verde es el color-identidad de
+// Territorio Emprende en DESIGN.md §3 ("tag de 'Territorio Emprende'"), así que
+// vestir con él a los emprendedores + el CTA los liga visualmente. Estructura
+// espejo de Trueque.astro: aquí el ArcDivider abre ARRIBA (rotate-180, entra
+// con curva cóncava desde el cream del Mapa) y el corte de abajo es un borde
+// `ink` recto (border-b-4) hacia Formulario. El `bg-green` va en un div
+// interior, NO en el <section>, por lo mismo que Trueque: si vive en el
+// <section> pinta también el área detrás del arco y el recorte cóncavo del SVG
+// deja de verse (revelaría verde sobre verde).
+//
+// Texto en `ink` sobre `green`: mejor contraste WCAG que `cream` — mismo
+// criterio ya documentado en src/data/lineup.ts y usado en Trueque.astro.
+//
+// Tarjetas: `bg-cream` + `ink-outline`/`sticker-shadow-sm` normales (no las
+// variantes `*-invert`, que son solo para bandas `bg-ink`) — sobre verde el
+// contorno y la sombra `ink` sí se ven. Uniformes, sin color rotando como las
+// tarjetas de banda: cada logo trae su propia paleta (y varios, fondo o texto
+// claro) y chocaría sobre una tinta saturada. Mismo criterio que los logos del
+// footer. Cada tarjeta lleva el logo arriba (caja de alto fijo) y el nombre
+// del emprendimiento debajo, en `font-headline` — varios logos son ilegibles
+// en chico, así que el nombre en texto va aparte.
+//
+// El logo va con `object-contain` en una caja de alto fijo: normaliza
+// proporciones muy distintas (wordmark horizontal vs. badge cuadrado) sin
+// recortar. `rounded-lg` discreto en la <Image> — se nota en los logos que son
+// un rectángulo opaco (fredhyloramas, jiloprint, las-botachelas…) y es inocuo
+// en los de fondo transparente. <Image> infiere las dimensiones intrínsecas
+// del ImageMetadata; `widths`+`sizes` porque el slot cambia de ancho al pasar
+// el grid de 2 → 5 columnas.
+//
+// `quality={55}`: varios de los archivos fuente vienen como si fueran fotos
+// (fredhyloramas ~163KB, ropa-aguilar ~104KB) y con la calidad por defecto
+// Astro apenas los baja. Al tamaño al que se muestran, el recorte de calidad
+// no se nota y evita servir 90-140KB por logo en la variante grande — la
+// prioridad #1 del sitio es cargar rápido en celular (DESIGN.md).
+//
+// Sin isla de GSAP — esto es Pasada 1 (PLAN.md). El fade+rise de entrada queda
+// para Pasada 2, copiando entonces la isla diferida de Bandas.astro.
+import { Image } from 'astro:assets';
+import ArcDivider from './ArcDivider.astro';
+import { emprendedores } from '../data/emprendedores';
+---
+
+<section id="emprendedores" class="relative">
+	<ArcDivider fillClass="fill-green" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
+
+	<div class="border-b-4 border-ink bg-green px-sm pt-lg pb-xl">
+		<div class="mx-auto flex max-w-2xl flex-col items-center gap-md text-center lg:max-w-4xl">
+			<div class="flex flex-col items-center gap-2">
+				<h2 class="font-headline text-2xl font-bold text-ink uppercase sm:text-3xl lg:text-4xl">Emprendedores</h2>
+				<p class="font-body text-ink/80 lg:text-lg">Los proyectos que estarán en Territorio Emprende.</p>
+			</div>
+
+			{/* 10 logos → 2 columnas en móvil (5 filas exactas) y 5 en desktop
+			    (2 filas exactas): ambos parten 10 sin dejar una tarjeta suelta,
+			    así que no hace falta el truco de última tarjeta de Bandas.astro
+			    (ese es para sus 9, impar). El salto 2→5 ocurre en `md` (768px),
+			    donde 5 logos por fila aún tienen ~135px de slot. */}
+			<div class="grid w-full grid-cols-2 gap-sm sm:gap-md md:grid-cols-5">
+				{
+					emprendedores.map((item) => (
+						<div class="ink-outline sticker-shadow-sm flex flex-col items-center gap-xs rounded-card bg-cream p-sm lg:p-md">
+							<div class="flex h-28 w-full items-center justify-center lg:h-32">
+								<Image
+									src={item.logo}
+									alt={item.name}
+									widths={[160, 240, 320]}
+									sizes="(min-width: 768px) 170px, 44vw"
+									quality={55}
+									class="max-h-full w-auto rounded-lg object-contain"
+								/>
+							</div>
+							<span class="font-headline text-xs font-bold text-ink uppercase leading-tight lg:text-sm">
+								{item.name}
+							</span>
+						</div>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</section>

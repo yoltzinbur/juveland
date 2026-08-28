@@ -20,13 +20,13 @@
 // tarjetas de colores resaltan como stickers sobre fondo negro en vez de
 // sumarse a la pelea de color.
 //
-// El arco de ArcDivider va ARRIBA esta vez (Trueque lo usa abajo) — mismo
-// componente, solo `rotate-180` en el `class` (la curva es simétrica
-// izquierda-derecha, así que un giro de 180° la deja apuntando para el otro
-// lado sin necesitar un segundo path). El borde plano queda abajo, sin línea
-// extra: un `border-ink` ahí sería invisible contra el propio fondo `bg-ink`
-// que tiene encima, así que no hace falta — el contraste ink→cream de la
-// sección siguiente ya es suficiente separación visual por sí solo.
+// ArcDivider en los DOS extremos de la banda `bg-ink`: arriba con `rotate-180`
+// (la curva es simétrica izquierda-derecha, así que un giro de 180° la apunta
+// para el otro lado sin necesitar un segundo path) y abajo sin rotar, como lo
+// usa Trueque. Los dos con `fill-ink` para continuar el bloque negro; el trazo
+// `ink` de cada curva sí se ve contra el `cream` de las secciones vecinas
+// (Agenda arriba, Social abajo) y recorta la banda como dos mordidas cóncavas
+// en vez de dos cantos rectos.
 //
 // Tarjetas: `cream-outline`/`sticker-shadow-invert-sm` en vez de
 // `ink-outline`/`sticker-shadow-sm` — el contorno/sombra normal en `ink` se
@@ -104,6 +104,8 @@ import { lineup } from '../data/lineup';
 			</div>
 		</div>
 	</div>
+
+	<ArcDivider fillClass="fill-ink" class="-mt-0.5 h-10 sm:h-16" />
 </section>
 
 <script>
