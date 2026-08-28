@@ -36,11 +36,16 @@
 // Mismos datos y colores que Agenda.astro (src/data/lineup.ts) para que cada
 // banda se vea con la misma tinta en ambas secciones.
 //
-// Sin fotos reales todavía — el usuario las va a mandar después. El
-// placeholder queda marcado con ícono de cámara + texto (nunca una imagen
-// inventada ni una foto de stock), y el color de fondo real de cada tarjeta
-// ya queda listo para cuando lleguen: solo hay que cambiar el bloque del
-// ícono por <Image>, el resto de la tarjeta no se toca.
+// Fotos reales (src/data/lineup.ts) recortadas a `aspect-square` con
+// `object-cover` — las fuentes son verticales (780×1040, 3:4), así que el
+// recorte centra la imagen y pierde un poco de los bordes superior/inferior;
+// decisión ya tomada de mantener la tarjeta cuadrada (layout ya aprobado) en
+// vez de alargarla a 3:4. `widths`+`sizes` en vez de un solo `width` fijo:
+// el grid pasa de 2 a 3 columnas en `sm`, así que el slot real de la tarjeta
+// cambia de ancho con el viewport — sin esto, Astro serviría un solo tamaño
+// (probablemente sobredimensionado para el slot angosto en móvil), que es
+// justo el problema de peso que se quería evitar.
+import { Image } from 'astro:assets';
 import ArcDivider from './ArcDivider.astro';
 import { lineup } from '../data/lineup';
 ---
@@ -68,25 +73,14 @@ import { lineup } from '../data/lineup';
 						<div
 							class={`banda-card cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}
 						>
-							<div class="flex aspect-square flex-col items-center justify-center gap-1 border-b-2 border-ink/15">
-								<svg
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									class={`h-7 w-7 opacity-40 sm:h-8 sm:w-8 lg:h-9 lg:w-9 ${item.text}`}
-									aria-hidden="true"
-								>
-									<path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
-									<circle cx="12" cy="13" r="3.5" />
-								</svg>
-								<span
-									class={`px-1 text-center font-headline text-[9px] font-bold uppercase opacity-50 sm:text-[10px] ${item.text}`}
-								>
-									Foto próximamente
-								</span>
+							<div class="aspect-square overflow-hidden border-b-2 border-ink/15">
+								<Image
+									src={item.photo}
+									alt={item.name}
+									widths={[200, 300, 400, 600]}
+									sizes="(min-width: 1024px) 290px, (min-width: 640px) 210px, 45vw"
+									class="h-full w-full object-cover"
+								/>
 							</div>
 							<div class="flex flex-col gap-0.5 px-sm py-sm lg:px-md lg:py-md">
 								<span class={`font-headline text-xs font-bold uppercase opacity-70 sm:text-sm lg:text-base ${item.text}`}>
