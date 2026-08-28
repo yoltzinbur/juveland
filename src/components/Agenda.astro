@@ -8,7 +8,9 @@
 // El countdown es en vivo (PLAN.md permite "estático... o con ella si es
 // rápido") — un solo setInterval de 1s. Hora objetivo fija en -06:00 (Zona
 // Centro de México, sin horario de verano desde 2022) para no depender de la
-// zona horaria del visitante.
+// zona horaria del visitante. Al llegar a 0 la tarjeta no se congela en
+// ceros: pasa a un estado "En vivo" (con la banda que toca en ese momento,
+// de src/data/lineup.ts) y, pasada la medianoche, a "¡Gracias por venir!".
 //
 // Pasada 2 (DESIGN.md §7 — "tick/flip simple en los números" + fade+rise
 // general para el resto de la sección) vive en el <script> al final.
@@ -30,7 +32,12 @@ import { lineup } from '../data/lineup';
 
 		<div class="countdown-card ink-outline sticker-shadow flex w-fit flex-col items-center gap-sm rounded-card bg-lime px-lg py-md lg:px-10 lg:py-lg">
 			<span class="font-headline text-xs font-bold tracking-wide text-ink/70 uppercase lg:text-sm">Faltan</span>
-			<div class="flex items-start gap-xs sm:gap-sm" id="countdown-numbers" data-target="2026-08-29T14:00:00-06:00">
+			<div
+				class="flex items-start gap-xs sm:gap-sm"
+				id="countdown-numbers"
+				data-target="2026-08-29T14:00:00-06:00"
+				data-schedule={JSON.stringify(lineup.map((i) => ({ t: i.time, n: i.name })))}
+			>
 				<div class="flex flex-col items-center">
 					<span
 						class="inline-block min-w-[2ch] text-center font-display text-4xl font-bold text-ink tabular-nums sm:text-5xl lg:text-6xl"
@@ -114,6 +121,7 @@ import { lineup } from '../data/lineup';
 			gsap.registerPlugin(ScrollTrigger);
 
 			const heading = section.querySelector<HTMLElement>('.agenda-heading');
+			const headingTitle = section.querySelector<HTMLElement>('.agenda-heading h2');
 			const countdownCard = section.querySelector<HTMLElement>('.countdown-card');
 			const subheading = section.querySelector<HTMLElement>('.agenda-subheading');
 			const agendaItems = Array.from(section.querySelectorAll<HTMLElement>('.agenda-item'));
@@ -190,10 +198,118 @@ import { lineup } from '../data/lineup';
 				},
 			);
 
-			// --- Countdown en vivo, con tick/flip en cada dígito que cambia ------
+			// --- Fase: upcoming (cuenta regresiva) / live ("En vivo") / ended
+			//     ("¡Gracias por venir!") — DESIGN.md §6. Todas se calculan contra
+			//     la hora objetivo fija en -06:00, no la zona del visitante.
 			const wrapper = document.getElementById('countdown-numbers');
 			const target = new Date(wrapper?.dataset.target ?? '');
+			// El line-up corre 14:00–22:00 (The Sinners cierra). Se mantiene "En
+			// vivo" hasta la medianoche y de ahí en adelante pasa a "Gracias".
+			const endOfEvent = target.getTime() + 10 * 60 * 60 * 1000;
 
+			type Slot = { t: string; n: string };
+			let schedule: Slot[] = [];
+			try {
+				schedule = JSON.parse(wrapper?.dataset.schedule ?? '[]');
+			} catch {
+				schedule = [];
+			}
+
+			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+			const phaseOf = (now: number): 'upcoming' | 'live' | 'ended' =>
+				now < target.getTime() ? 'upcoming' : now < endOfEvent ? 'live' : 'ended';
+
+			// Banda en el escenario ahora: último horario del line-up que ya pasó.
+			// Aritmética pura sobre `target` (= primer horario) para no depender
+			// de la zona horaria del visitante.
+			const currentAct = (now: number): string => {
+				const first = schedule[0];
+				if (!first) return '';
+				const toMs = (hhmm: string) => {
+					const [h, m] = hhmm.split(':').map(Number);
+					return (h * 60 + m) * 60 * 1000;
+				};
+				const anchor = target.getTime() - toMs(first.t);
+				let act = first.n;
+				for (const slot of schedule) {
+					if (now >= anchor + toMs(slot.t)) act = slot.n;
+				}
+				return act;
+			};
+
+			let watchId: ReturnType<typeof setInterval> | undefined;
+			let countdownId: ReturnType<typeof setInterval> | undefined;
+
+			const renderEnded = () => {
+				if (headingTitle) headingTitle.textContent = '¡Gracias por venir!';
+				if (!countdownCard) return;
+				countdownCard.innerHTML = `
+					<span class="font-headline text-xs font-bold tracking-wide text-ink/70 uppercase lg:text-sm">29 de agosto de 2026</span>
+					<span class="font-display text-3xl font-bold text-ink sm:text-4xl lg:text-5xl">¡Gracias por venir!</span>
+					<span class="font-body text-sm text-ink/70 lg:text-base">Gracias a todas y todos por acompañarnos.</span>
+				`;
+			};
+
+			const updateAct = () => {
+				const el = countdownCard?.querySelector<HTMLElement>('[data-live-act]');
+				if (!el) return;
+				const act = currentAct(Date.now());
+				el.textContent = act ? `En el escenario: ${act}` : 'El festival está pasando en la Alameda';
+			};
+
+			const renderLive = () => {
+				if (headingTitle) headingTitle.textContent = '¡Es hoy!';
+				if (!countdownCard) return;
+				countdownCard.classList.remove('bg-lime');
+				countdownCard.classList.add('bg-red');
+				countdownCard.innerHTML = `
+					<div class="flex items-center gap-xs">
+						<span class="countdown-live-dot inline-block h-2.5 w-2.5 rounded-full bg-cream lg:h-3 lg:w-3"></span>
+						<span class="font-headline text-sm font-extrabold tracking-widest text-cream uppercase lg:text-base">En vivo</span>
+					</div>
+					<span class="font-display text-3xl font-bold text-cream sm:text-4xl lg:text-5xl">¡Ya empezó!</span>
+					<span class="font-body text-sm text-cream/85 lg:text-base" data-live-act></span>
+				`;
+				const dot = countdownCard.querySelector<HTMLElement>('.countdown-live-dot');
+				if (dot && !reduceMotion) {
+					gsap.to(dot, {
+						opacity: 0.3,
+						scale: 0.6,
+						duration: 0.7,
+						repeat: -1,
+						yoyo: true,
+						ease: 'sine.inOut',
+					});
+				}
+				updateAct();
+			};
+
+			const watchForEnd = () => {
+				watchId = setInterval(() => {
+					if (phaseOf(Date.now()) === 'ended') {
+						if (watchId) clearInterval(watchId);
+						renderEnded();
+						return;
+					}
+					updateAct();
+				}, 60 * 1000);
+			};
+
+			const phase = phaseOf(Date.now());
+
+			if (phase === 'ended') {
+				renderEnded();
+				return;
+			}
+
+			if (phase === 'live') {
+				renderLive();
+				watchForEnd();
+				return;
+			}
+
+			// --- phase === 'upcoming': cuenta regresiva en vivo con tick/flip --
 			const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
 			const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
 			const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
@@ -201,8 +317,6 @@ import { lineup } from '../data/lineup';
 
 			const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
 			gsap.set(digitEls, { transformPerspective: 300 });
-
-			const flipReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 			// El primer render (de "00" al valor real) no lleva flip: si no,
 			// compite con el fade+rise de entrada de arriba, que corre justo
@@ -217,7 +331,7 @@ import { lineup } from '../data/lineup';
 			const setDigit = (el: HTMLElement | null | undefined, value: string) => {
 				if (!el || el.textContent === value) return;
 
-				if (isFirstTick || flipReduceMotion) {
+				if (isFirstTick || reduceMotion) {
 					el.textContent = value;
 					return;
 				}
@@ -235,18 +349,13 @@ import { lineup } from '../data/lineup';
 
 			const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
 
-			let intervalId: ReturnType<typeof setInterval> | undefined;
-
 			const tick = () => {
 				const diff = target.getTime() - Date.now();
 
 				if (diff <= 0) {
-					setDigit(days, '00');
-					setDigit(hours, '00');
-					setDigit(minutes, '00');
-					setDigit(seconds, '00');
-					isFirstTick = false;
-					clearInterval(intervalId);
+					if (countdownId) clearInterval(countdownId);
+					renderLive();
+					watchForEnd();
 					return;
 				}
 
@@ -259,7 +368,7 @@ import { lineup } from '../data/lineup';
 			};
 
 			tick();
-			intervalId = setInterval(tick, 1000);
+			countdownId = setInterval(tick, 1000);
 		};
 
 		// No se empieza a observar hasta que el Loader se retira: si la sección
