@@ -69,9 +69,17 @@ import { lineup } from '../data/lineup';
 
 			<div class="grid w-full grid-cols-2 gap-sm sm:grid-cols-3 sm:gap-md">
 				{
-					lineup.map((item) => (
+					lineup.map((item, i) => (
 						<div
-							class={`banda-card cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg}`}
+							class={`banda-card cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg} ${
+								/* 9 bandas → el grid móvil de 2 col deja la última suelta; que
+								   ocupe las dos columnas pero con el ancho de una sola, centrada
+								   (una col = (100% - gap-sm) / 2 = 50% - 8px). En `sm`+ son 3 col
+								   y cierran 3×3 exactas, así que ahí vuelve a lo normal. */
+								i === lineup.length - 1
+									? 'col-span-2 mx-auto w-[calc(50%-var(--spacing-xs))] sm:col-span-1 sm:mx-0 sm:w-auto'
+									: ''
+							}`}
 						>
 							<div class="aspect-square overflow-hidden border-b-2 border-ink/15">
 								<Image
