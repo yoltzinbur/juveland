@@ -17,7 +17,10 @@ import casaPeluditos from '../assets/emprendedores/casa-peluditos.webp';
 import coffeeMilk from '../assets/emprendedores/coffee-milk.webp';
 import fredhyloramas from '../assets/emprendedores/fredhyloramas.webp';
 import jiloprint3d from '../assets/emprendedores/jiloprint-3d.webp';
+import jiloteTaller from '../assets/emprendedores/jilote-taller.webp';
 import lasBotachelas from '../assets/emprendedores/las-botachelas-and-drinks.webp';
+import llyreenSnacks from '../assets/emprendedores/llyreen-snacks.webp';
+import mercaditoArtesanal from '../assets/emprendedores/mercadito-artesanal.webp';
 import michedrinks from '../assets/emprendedores/michedrinks.webp';
 import octliXilotl from '../assets/emprendedores/octli-xilotl.webp';
 import ropaAguilar from '../assets/emprendedores/ropa-aguilar.webp';
@@ -34,7 +37,10 @@ export const emprendedores: Emprendedor[] = [
 	{ name: 'Coffee Milk', logo: coffeeMilk },
 	{ name: 'Fredhyloramas', logo: fredhyloramas },
 	{ name: 'JiloPrint 3D', logo: jiloprint3d },
+	{ name: 'Jilote Taller', logo: jiloteTaller },
 	{ name: 'Las Botachelas', logo: lasBotachelas },
+	{ name: 'Llyreen Snacks', logo: llyreenSnacks },
+	{ name: 'Mercadito Artesanal', logo: mercaditoArtesanal },
 	{ name: 'MicheDrinks', logo: michedrinks },
 	{ name: 'Octli Xilotl', logo: octliXilotl },
 	{ name: 'Ropa Aguilar', logo: ropaAguilar },

@@ -66,15 +66,18 @@ import { emprendedores } from '../data/emprendedores';
 				<p class="font-body text-ink/80 lg:text-lg">Los proyectos que estarán en Territorio Emprende.</p>
 			</div>
 
-			{/* 10 logos → 2 columnas en móvil (5 filas exactas) y 5 en desktop
-			    (2 filas exactas): ambos parten 10 sin dejar una tarjeta suelta,
-			    así que no hace falta el truco de última tarjeta de Bandas.astro
-			    (ese es para sus 9, impar). El salto 2→5 ocurre en `md` (768px),
-			    donde 5 logos por fila aún tienen ~135px de slot. */}
-			<div class="grid w-full grid-cols-2 gap-sm sm:gap-md md:grid-cols-5">
+			{/* `flex flex-wrap` + `justify-center` en vez de grid: el conteo de
+			    logos no siempre parte exacto (13 → deja 1 suelta a 2 col y 3 en
+			    la última fila a 5 col), y una grilla alinea esas sobrantes a la
+			    izquierda. Con flex-wrap la fila incompleta queda CENTRADA a lo
+			    largo de la fila. El ancho de cada tarjeta imita columnas fijas:
+			    ~50% en móvil, ~20% en `md` (768px, ~135px de slot); el `-Npx`
+			    descuenta el gap (16px base, 24px desde `sm`) y deja 4px de
+			    holgura para que no se desborde una tarjeta y se rompa la fila. */}
+			<div class="flex w-full flex-wrap justify-center gap-sm sm:gap-md">
 				{
 					emprendedores.map((item) => (
-						<div class="emprendedor-card ink-outline sticker-shadow-sm flex flex-col items-center gap-xs rounded-card bg-cream p-sm lg:p-md">
+						<div class="emprendedor-card ink-outline sticker-shadow-sm flex w-[calc(50%-10px)] flex-col items-center gap-xs rounded-card bg-cream p-sm sm:w-[calc(50%-14px)] md:w-[calc(20%-20px)] lg:p-md">
 							<div class="flex h-28 w-full items-center justify-center lg:h-32">
 								<Image
 									src={item.logo}
