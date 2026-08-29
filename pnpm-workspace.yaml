@@ -1,3 +1,7 @@
+# Dependencias cuyos scripts de instalación (postinstall / build nativo) se
+# permiten sin aprobación interactiva — pnpm 10+ los bloquea por defecto.
+# `esbuild` y `sharp` los necesita la toolchain de Astro (bundler y
+# optimización de imágenes con astro:assets).
 allowBuilds:
   esbuild: true
   sharp: true

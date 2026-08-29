@@ -34,14 +34,7 @@ import logoImjuve from '../assets/logo/logo-imjuve.png';
 import logoPuebloMagico from '../assets/logo/logo-pueblo-magico.png';
 import SocialIcon from './SocialIcon.astro';
 import { socialAccounts } from '../data/social';
-
-const links = [
-	{ href: '#inicio', label: 'Inicio' },
-	{ href: '#agenda', label: 'Agenda' },
-	{ href: '#territorio-emprende', label: 'Territorio Emprende' },
-	{ href: '#mapa', label: 'Mapa' },
-	{ href: '#contacto', label: 'Contacto' },
-];
+import { navLinks as links } from '../data/nav';
 
 const footerLogos = [
 	{ src: logoImjuve, alt: 'IMJUVE Jilotepec' },
@@ -61,7 +54,7 @@ const footerLogos = [
 			</div>
 
 			<div class="flex flex-col items-center gap-2 sm:items-start">
-				<span class="font-headline text-xs font-bold tracking-wide text-cream/50 uppercase lg:text-sm">Navegación</span>
+				<span class="font-headline text-xs font-bold tracking-wide text-cream/70 uppercase lg:text-sm">Navegación</span>
 				<ul class="flex flex-col items-center gap-1 sm:items-start">
 					{
 						links.map((link) => (
@@ -79,7 +72,7 @@ const footerLogos = [
 			</div>
 
 			<div class="flex flex-col items-center gap-2 sm:items-start">
-				<span class="font-headline text-xs font-bold tracking-wide text-cream/50 uppercase lg:text-sm">Contacto</span>
+				<span class="font-headline text-xs font-bold tracking-wide text-cream/70 uppercase lg:text-sm">Contacto</span>
 				<p class="font-body text-sm text-cream/80 lg:text-base">Escríbenos por redes:</p>
 				<div class="flex items-center gap-2">
 					{
@@ -110,7 +103,7 @@ const footerLogos = [
 
 			<div class="flex flex-col items-center gap-xs text-center">
 				<Image src={mascotaVerde} alt="" width={80} class="h-auto w-8 opacity-80 lg:w-10" />
-				<p class="font-body text-xs text-cream/40 lg:text-sm">
+				<p class="font-body text-xs text-cream/60 lg:text-sm">
 					© 2026 Juveland — 1er Festival de las Juventudes de Jilotepec, IMJUVE.
 				</p>
 			</div>

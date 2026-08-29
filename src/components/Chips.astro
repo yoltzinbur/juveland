@@ -51,113 +51,51 @@ const chips = [
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — "Chips... fade+rise por sección vía
-	// IntersectionObserver, stagger ~0.06s" (DESIGN.md §7 usa ScrollTrigger
-	// como el equivalente GSAP de ese patrón en todo el resto del sitio).
-	// El encabezado entra primero como bloque; cada círculo se "estampa" con
-	// un ligero overshoot (back.out) para que se sienta como una tarjeta
-	// sticker aterrizando, no solo un fade plano.
+	// Pasada 2 (PLAN.md) — "Chips... fade+rise por sección, stagger ~0.06s"
+	// (DESIGN.md §7). El encabezado entra primero como bloque; cada círculo se
+	// "estampa" con un ligero overshoot (back.out) para que se sienta como una
+	// tarjeta sticker aterrizando, no solo un fade plano.
 	//
-	// Afinación de rendimiento: GSAP + ScrollTrigger ya NO se importan de
-	// forma estática aquí. Se cargaban en el primer load junto con las otras
-	// islas y sumaban main-thread / Total Blocking Time en celular mediano sin
-	// que se vieran (esta sección está bajo el pliegue). Ahora GSAP entra con
-	// import() dinámico recién cuando la sección se acerca al viewport
-	// (IntersectionObserver, rootMargin 200px para que llegue lista antes de
-	// verse). El chunk de GSAP ya lo trae Hero/Navbar de forma estática, así
-	// que este import() casi siempre resuelve al instante desde caché — lo que
-	// se difiere es el trabajo (registerPlugin, crear el timeline+ScrollTrigger,
-	// el immediateRender de los .from()), no la descarga.
-	const section = document.querySelector<HTMLElement>('#chips');
+	// Todo el andamiaje (esperar al Loader, IntersectionObserver + rootMargin,
+	// import() diferido de GSAP, `matchMedia` con reduceMotion/motionOk) vive
+	// una sola vez en src/scripts/reveal.ts — antes estaba copiado en las 5
+	// secciones animadas.
+	import { onSectionReveal } from '../scripts/reveal';
 
-	if (section) {
-		const animate = async () => {
-			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-				import('gsap'),
-				import('gsap/ScrollTrigger'),
-			]);
-			gsap.registerPlugin(ScrollTrigger);
+	onSectionReveal('#chips', ({ gsap, section, reduceMotion }) => {
+		const heading = section.querySelector<HTMLElement>('.chips-heading');
+		const cards = Array.from(section.querySelectorAll<HTMLElement>('.chip-card'));
 
-			const heading = section.querySelector<HTMLElement>('.chips-heading');
-			const cards = Array.from(section.querySelectorAll<HTMLElement>('.chip-card'));
-
-			// Dos condiciones mutuamente excluyentes que cubren el 100% de los
-			// casos, porque con una sola condición nombrada matchMedia solo
-			// invoca el callback cuando ESA media query da true.
-			gsap.matchMedia().add(
-				{
-					reduceMotion: '(prefers-reduced-motion: reduce)',
-					motionOk: '(prefers-reduced-motion: no-preference)',
-				},
-				(context) => {
-					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-					const tl = gsap.timeline({
-						scrollTrigger: {
-							trigger: section,
-							start: 'top 82%',
-							toggleActions: 'play none none reverse',
-						},
-					});
-
-					if (heading) {
-						tl.from(heading, {
-							opacity: 0,
-							y: reduceMotion ? 0 : 16,
-							duration: reduceMotion ? 0.3 : 0.5,
-							ease: 'power2.out',
-						});
-					}
-
-					if (cards.length) {
-						tl.from(
-							cards,
-							{
-								opacity: 0,
-								y: reduceMotion ? 0 : 24,
-								scale: reduceMotion ? 1 : 0.85,
-								duration: reduceMotion ? 0.3 : 0.5,
-								ease: 'back.out(1.7)',
-								stagger: reduceMotion ? 0 : 0.06,
-							},
-							reduceMotion ? undefined : '-=0.25',
-						);
-					}
-				},
-			);
-		};
-
-		// No se empieza a observar hasta que el Loader se retira. #chips suele
-		// quedar ARRIBA de la línea de disparo ('top 82%') ya en el load, así
-		// que el ScrollTrigger reproduciría la entrada de inmediato — entera
-		// detrás del overlay del Loader (z-[100], ~1.3s), sin que nadie la vea
-		// (el mismo bug que tenían las letras del Hero). `whenLoaderGone`
-		// resuelve al instante si no hay Loader o si ya se ocultó; si no,
-		// espera el evento `juveland:loader-hidden` (con salvavidas por si el
-		// script del Loader falla).
-		const whenLoaderGone = () => {
-			const loader = document.getElementById('loader');
-			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
-			return new Promise<void>((resolve) => {
-				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
-				window.setTimeout(resolve, 4500);
-			});
-		};
-
-		whenLoaderGone().then(() => {
-			if ('IntersectionObserver' in window) {
-				const io = new IntersectionObserver(
-					(entries, obs) => {
-						if (!entries.some((entry) => entry.isIntersecting)) return;
-						obs.disconnect();
-						animate();
-					},
-					{ rootMargin: '200px' },
-				);
-				io.observe(section);
-			} else {
-				animate();
-			}
+		const tl = gsap.timeline({
+			scrollTrigger: {
+				trigger: section,
+				start: 'top 82%',
+				toggleActions: 'play none none reverse',
+			},
 		});
-	}
+
+		if (heading) {
+			tl.from(heading, {
+				opacity: 0,
+				y: reduceMotion ? 0 : 16,
+				duration: reduceMotion ? 0.3 : 0.5,
+				ease: 'power2.out',
+			});
+		}
+
+		if (cards.length) {
+			tl.from(
+				cards,
+				{
+					opacity: 0,
+					y: reduceMotion ? 0 : 24,
+					scale: reduceMotion ? 1 : 0.85,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'back.out(1.7)',
+					stagger: reduceMotion ? 0 : 0.06,
+				},
+				reduceMotion ? undefined : '-=0.25',
+			);
+		}
+	});
 </script>

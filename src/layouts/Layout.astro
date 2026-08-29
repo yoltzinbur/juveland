@@ -9,13 +9,23 @@ interface Props {
 	title?: string;
 	description?: string;
 	showLoader?: boolean;
+	/** Añade <meta name="robots" content="noindex"> — para páginas internas
+	 *  como /style-guide, que se publican pero no deben aparecer en buscadores. */
+	noindex?: boolean;
 }
 
 const {
 	title = 'Juveland — 1er Festival de las Juventudes de Jilotepec',
 	description = 'Sábado 29 de agosto, Jilotepec. Música en vivo, Territorio Emprende y más — organizado por IMJUVE Jilotepec.',
 	showLoader = true,
+	noindex = false,
 } = Astro.props;
+
+// `Astro.site` (astro.config.mjs) es la base para URLs absolutas — Open Graph
+// y Twitter Card las exigen absolutas, y el canal principal de difusión del
+// sitio (un link por WhatsApp) renderiza su preview a partir de esas etiquetas.
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
 ---
 
 <!doctype html>
@@ -24,9 +34,33 @@ const {
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<meta name="theme-color" content="#faf9f7" />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="description" content={description} />
+
 		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+		{noindex && <meta name="robots" content="noindex" />}
+
+		{/* Open Graph — WhatsApp, Facebook, iMessage, Telegram… */}
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="Juveland" />
+		<meta property="og:locale" content="es_MX" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="JUVELAND — 1er Festival de las Juventudes de Jilotepec, sábado 29 de agosto en la Alameda de Jilotepec." />
+
+		{/* Twitter / X */}
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImage} />
+
 		<Font cssVariable="--font-baloo-2" preload />
 		<Font cssVariable="--font-nunito" preload />
 		<Font cssVariable="--font-fredoka" />

@@ -42,10 +42,8 @@
 //
 // Animación de entrada (isla propia al final): mismo "abanico" de mazo de
 // cartas que Bandas.astro — las tarjetas entran alternando rotación ±10° con
-// `back.out`, como si se repartieran. GSAP + ScrollTrigger se importan en
-// diferido (import() dinámico cuando la sección se acerca al viewport) y solo
-// después de que se retira el Loader; respeta `prefers-reduced-motion` (cae a
-// un fade+rise plano). El contenido es legible aunque el JS falle o tarde.
+// `back.out`. El andamiaje diferido (esperar al Loader, IntersectionObserver,
+// import() de GSAP, matchMedia con reduced-motion) vive en src/scripts/reveal.ts.
 import { Image } from 'astro:assets';
 import ArcDivider from './ArcDivider.astro';
 import { emprendedores } from '../data/emprendedores';
@@ -101,106 +99,47 @@ import { emprendedores } from '../data/emprendedores';
 <script>
 	// Pasada 2 (PLAN.md) — mismo "abanico" (rotación alternada + acomodo con
 	// `back.out`) que Bandas.astro, para que las dos secciones de tarjetas
-	// tengan el mismo lenguaje de entrada. Aislado en su propia isla de Astro.
-	//
-	// Afinación de rendimiento (mismo criterio que Bandas/Chips/Agenda): GSAP +
-	// ScrollTrigger NO se importan estático — esta sección está bajo el pliegue,
-	// así que entran con import() dinámico recién cuando se acerca al viewport
-	// (IntersectionObserver, rootMargin 200px). El chunk de GSAP ya lo trae
-	// Hero/Navbar de forma estática, así que el import() resuelve desde caché;
-	// lo que se difiere es el trabajo (registerPlugin, timeline + ScrollTrigger,
-	// el immediateRender de los .from() que empujan las tarjetas rotadas fuera
-	// del viewport — ver overflow-x-clip en el <section>), no la descarga.
-	const section = document.querySelector<HTMLElement>('#emprendedores');
+	// tengan el mismo lenguaje de entrada. Andamiaje compartido en
+	// src/scripts/reveal.ts; `overflow-x-clip` en el <section> contiene el
+	// immediateRender de los .from() que empujan las tarjetas rotadas fuera del
+	// viewport.
+	import { onSectionReveal } from '../scripts/reveal';
 
-	if (section) {
-		const animate = async () => {
-			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-				import('gsap'),
-				import('gsap/ScrollTrigger'),
-			]);
-			gsap.registerPlugin(ScrollTrigger);
+	onSectionReveal('#emprendedores', ({ gsap, section, reduceMotion }) => {
+		const heading = section.querySelector<HTMLElement>('.emprendedores-heading');
+		const cards = Array.from(section.querySelectorAll<HTMLElement>('.emprendedor-card'));
 
-			const heading = section.querySelector<HTMLElement>('.emprendedores-heading');
-			const cards = Array.from(section.querySelectorAll<HTMLElement>('.emprendedor-card'));
-
-			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
-			gsap.matchMedia().add(
-				{
-					reduceMotion: '(prefers-reduced-motion: reduce)',
-					motionOk: '(prefers-reduced-motion: no-preference)',
-				},
-				(context) => {
-					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-					const tl = gsap.timeline({
-						scrollTrigger: {
-							trigger: section,
-							start: 'top 78%',
-							toggleActions: 'play none none reverse',
-						},
-					});
-
-					if (heading) {
-						tl.from(heading, {
-							opacity: 0,
-							y: reduceMotion ? 0 : 16,
-							duration: reduceMotion ? 0.3 : 0.5,
-							ease: 'power2.out',
-						});
-					}
-
-					if (cards.length) {
-						// Alterna la rotación de entrada (izquierda/derecha) tarjeta por
-						// tarjeta, como si se repartieran de un mazo — `back.out` para que
-						// se sientan "acomodándose" al llegar, no solo deteniéndose.
-						tl.from(
-							cards,
-							{
-								opacity: 0,
-								y: reduceMotion ? 0 : 30,
-								scale: reduceMotion ? 1 : 0.8,
-								rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
-								duration: reduceMotion ? 0.3 : 0.6,
-								ease: 'back.out(1.6)',
-								stagger: reduceMotion ? 0 : 0.06,
-							},
-							reduceMotion ? undefined : '-=0.25',
-						);
-					}
-				},
-			);
-		};
-
-		// No se empieza a observar hasta que el Loader se retira: si la sección
-		// ya está por encima de la línea de disparo del ScrollTrigger en el load,
-		// la entrada se reproduciría entera detrás del overlay del Loader.
-		// `whenLoaderGone` resuelve al instante si no hay Loader o si ya se
-		// ocultó; si no, espera el evento `juveland:loader-hidden` (con
-		// salvavidas por si el Loader falla).
-		const whenLoaderGone = () => {
-			const loader = document.getElementById('loader');
-			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
-			return new Promise<void>((resolve) => {
-				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
-				window.setTimeout(resolve, 4500);
-			});
-		};
-
-		whenLoaderGone().then(() => {
-			if ('IntersectionObserver' in window) {
-				const io = new IntersectionObserver(
-					(entries, obs) => {
-						if (!entries.some((entry) => entry.isIntersecting)) return;
-						obs.disconnect();
-						animate();
-					},
-					{ rootMargin: '200px' },
-				);
-				io.observe(section);
-			} else {
-				animate();
-			}
+		const tl = gsap.timeline({
+			scrollTrigger: {
+				trigger: section,
+				start: 'top 78%',
+				toggleActions: 'play none none reverse',
+			},
 		});
-	}
+
+		if (heading) {
+			tl.from(heading, {
+				opacity: 0,
+				y: reduceMotion ? 0 : 16,
+				duration: reduceMotion ? 0.3 : 0.5,
+				ease: 'power2.out',
+			});
+		}
+
+		if (cards.length) {
+			tl.from(
+				cards,
+				{
+					opacity: 0,
+					y: reduceMotion ? 0 : 30,
+					scale: reduceMotion ? 1 : 0.8,
+					rotation: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -10 : 10),
+					duration: reduceMotion ? 0.3 : 0.6,
+					ease: 'back.out(1.6)',
+					stagger: reduceMotion ? 0 : 0.06,
+				},
+				reduceMotion ? undefined : '-=0.25',
+			);
+		}
+	});
 </script>

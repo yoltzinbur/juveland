@@ -26,10 +26,9 @@ pnpm-debug.log*
 # playwright mcp working files (snapshots, screenshots)
 .playwright-mcp/
 
-# claude
-CLAUDE.md
+# claude — AGENTS.md / CLAUDE.md (symlink) are tracked on purpose (project
+# guidance for the team); only the local planning docs stay out.
 .claude
-AGENTS.md
 PLAN.md
 
 # impeccable 

@@ -1,9 +1,21 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
+  // Dominio de despliegue. Hoy es la URL por defecto de Vercel (proyecto
+  // "juveland"); cuando IMJUVE confirme un dominio propio, cambiarlo aquí —
+  // de esto dependen el <link rel=canonical>, las URLs absolutas de Open
+  // Graph/Twitter (Layout.astro) y el sitemap.
+  site: 'https://juveland.vercel.app',
+  integrations: [
+    sitemap({
+      // /style-guide es una página interna (noindex) — fuera del sitemap.
+      filter: (page) => !page.includes('/style-guide'),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

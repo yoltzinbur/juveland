@@ -8,8 +8,11 @@
 // Huella es el primer caso: el texto oficial de IMJUVE va completo aquí,
 // verbatim, mientras la sección solo muestra un resumen breve).
 //
-// `id` debe ser único por instancia — todo lo demás (ids internos, el script)
-// se deriva de él, así que dos <InfoSheet> en la misma página no chocan.
+// `id` debe ser único por instancia — los ids internos se derivan de él, así
+// que dos <InfoSheet> en la misma página no chocan. El script es ahora un
+// <script> procesado (bundleado, no `is:inline`): lee el `id` de cada
+// instancia desde `data-info-sheet` en el botón e itera sobre todas, así puede
+// importar el helper compartido de trampa de foco (src/scripts/focusTrap.ts).
 //
 // OJO al usar `max-w-{sm,md,lg,xl}` en este proyecto: global.css define
 // tokens `--spacing-xs/sm/md/lg/xl` propios (DESIGN.md, para gap/padding),
@@ -32,6 +35,7 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 <button
 	type="button"
 	id={`${id}-trigger`}
+	data-info-sheet={id}
 	aria-haspopup="dialog"
 	aria-controls={`${id}-sheet`}
 	aria-expanded="false"
@@ -47,6 +51,7 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 	role="dialog"
 	aria-modal="true"
 	aria-label={title}
+	tabindex="-1"
 	class="ink-outline-thick sticker-shadow fixed inset-x-3 bottom-3 z-50 hidden max-h-[75vh] overflow-y-auto rounded-card bg-cream p-md sm:inset-x-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:w-11/12 sm:max-w-[32rem] sm:-translate-x-1/2 sm:-translate-y-1/2"
 >
 	<div class="mb-sm flex items-center justify-between gap-sm">
@@ -68,45 +73,52 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 	</div>
 </div>
 
-<script define:vars={{ id }}>
-	const trigger = document.getElementById(`${id}-trigger`);
-	const sheet = document.getElementById(`${id}-sheet`);
-	const backdrop = document.getElementById(`${id}-backdrop`);
-	const closeBtn = document.getElementById(`${id}-close`);
+<script>
+	import { createFocusTrap } from '../scripts/focusTrap';
 
-	// El botón "atrás" del teléfono cierra el diálogo en vez de salir de la
-	// página: como es una SPA de una sola URL, sin esto el back sale del sitio
-	// con el diálogo abierto. Al abrir se mete una entrada de historial y se
-	// escucha `popstate`; al cerrar por acción del usuario se deshace esa
-	// entrada con `history.back()` para no dejar basura en el historial.
-	function onPopState() {
-		closeSheet({ fromPopState: true });
-	}
+	document.querySelectorAll<HTMLButtonElement>('[data-info-sheet]').forEach((trigger) => {
+		const id = trigger.dataset.infoSheet;
+		if (!id) return;
 
-	const openSheet = () => {
-		sheet?.classList.remove('hidden');
-		backdrop?.classList.remove('hidden');
-		trigger?.setAttribute('aria-expanded', 'true');
-		document.body.style.overflow = 'hidden';
-		history.pushState({ sheet: id }, '');
-		window.addEventListener('popstate', onPopState);
-	};
+		const sheet = document.getElementById(`${id}-sheet`);
+		const backdrop = document.getElementById(`${id}-backdrop`);
+		const closeBtn = document.getElementById(`${id}-close`);
+		const trap = sheet ? createFocusTrap(sheet) : null;
 
-	const closeSheet = ({ fromPopState = false } = {}) => {
-		if (sheet?.classList.contains('hidden')) return;
-		sheet?.classList.add('hidden');
-		backdrop?.classList.add('hidden');
-		trigger?.setAttribute('aria-expanded', 'false');
-		document.body.style.overflow = '';
-		window.removeEventListener('popstate', onPopState);
-		if (!fromPopState && history.state?.sheet === id) history.back();
-	};
+		// El botón "atrás" del teléfono cierra el diálogo en vez de salir de la
+		// página: como es una SPA de una sola URL, sin esto el back sale del
+		// sitio con el diálogo abierto. Al abrir se mete una entrada de
+		// historial y se escucha `popstate`; al cerrar por acción del usuario se
+		// deshace esa entrada con `history.back()`.
+		const onPopState = () => closeSheet({ fromPopState: true });
 
-	trigger?.addEventListener('click', openSheet);
-	closeBtn?.addEventListener('click', () => closeSheet());
-	backdrop?.addEventListener('click', () => closeSheet());
+		const openSheet = () => {
+			sheet?.classList.remove('hidden');
+			backdrop?.classList.remove('hidden');
+			trigger.setAttribute('aria-expanded', 'true');
+			document.body.style.overflow = 'hidden';
+			history.pushState({ sheet: id }, '');
+			window.addEventListener('popstate', onPopState);
+			trap?.activate();
+		};
 
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape') closeSheet();
+		const closeSheet = ({ fromPopState = false } = {}) => {
+			if (sheet?.classList.contains('hidden')) return;
+			trap?.deactivate();
+			sheet?.classList.add('hidden');
+			backdrop?.classList.add('hidden');
+			trigger.setAttribute('aria-expanded', 'false');
+			document.body.style.overflow = '';
+			window.removeEventListener('popstate', onPopState);
+			if (!fromPopState && history.state?.sheet === id) history.back();
+		};
+
+		trigger.addEventListener('click', openSheet);
+		closeBtn?.addEventListener('click', () => closeSheet());
+		backdrop?.addEventListener('click', () => closeSheet());
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape') closeSheet();
+		});
 	});
 </script>

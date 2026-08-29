@@ -21,6 +21,13 @@
 	--radius-card: 20px;
 	--radius-button: 16px;
 
+	/* Punto de corte a medida del Hero — abajo de 830px el cluster de la
+	 * esquina (insignia + mascota + fecha) se encima con las letras de
+	 * JUVELAND, así que ese ancho alterna entre el layout tipo chip y el de
+	 * escritorio. Tailwind v4 genera la variante `hero:` a partir de este
+	 * token; antes esto era `min-[830px]:` repetido ~8 veces en Hero.astro. */
+	--breakpoint-hero: 830px;
+
 	/* Espaciado — DESIGN.md (frontmatter), se suma a la escala numérica de Tailwind */
 	--spacing-xs: 8px;
 	--spacing-sm: 16px;

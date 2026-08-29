@@ -52,125 +52,64 @@ const reasons = [
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — "Por qué venir" en cascada numerada 01→02→03, como
-	// los pasos de Socials Analytics: cada punto entra con su numeral y su
-	// check al mismo tiempo (no son animaciones separadas dentro del mismo
-	// punto), pero los puntos entre sí sí van uno detrás de otro, no todos de
-	// golpe — de ahí el stagger más largo que en Chips.astro (ahí eran 5
-	// círculos chicos entrando casi juntos; aquí son pasos que se quieren
-	// leer en secuencia).
+	// Pasada 2 (PLAN.md) — "Por qué venir" en cascada, como los pasos de Socials
+	// Analytics: cada punto (check + texto) entra como un bloque, pero los
+	// puntos entre sí van uno detrás de otro con un stagger más largo que en
+	// Chips (ahí eran 5 círculos entrando casi juntos; aquí son pasos que se
+	// quieren leer en secuencia). El check, además, se "tica" con un pop propio
+	// superpuesto al mismo instante en que aparece su punto.
 	//
-	// Afinación de rendimiento (mismo criterio que Chips/Agenda/Bandas): GSAP +
-	// ScrollTrigger ya NO se importan estático — esta sección está bajo el
-	// pliegue, así que GSAP entra con import() dinámico recién cuando se acerca
-	// al viewport (IntersectionObserver, rootMargin 200px). El chunk de GSAP ya
-	// lo trae Hero/Navbar de forma estática, así que el import() resuelve desde
-	// caché; lo que se difiere es el trabajo, no la descarga.
-	const section = document.querySelector<HTMLElement>('#por-que-venir');
+	// Andamiaje compartido (Loader, IntersectionObserver, import() diferido de
+	// GSAP, matchMedia) en src/scripts/reveal.ts.
+	import { onSectionReveal } from '../scripts/reveal';
 
-	if (section) {
-		const animate = async () => {
-			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-				import('gsap'),
-				import('gsap/ScrollTrigger'),
-			]);
-			gsap.registerPlugin(ScrollTrigger);
+	onSectionReveal('#por-que-venir', ({ gsap, section, reduceMotion }) => {
+		const heading = section.querySelector<HTMLElement>('.why-heading');
+		const items = Array.from(section.querySelectorAll<HTMLElement>('.reason-item'));
+		const checks = Array.from(section.querySelectorAll<HTMLElement>('.reason-check'));
 
-			const heading = section.querySelector<HTMLElement>('.why-heading');
-			const items = Array.from(section.querySelectorAll<HTMLElement>('.reason-item'));
-			const checks = Array.from(section.querySelectorAll<HTMLElement>('.reason-check'));
-
-			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
-			gsap.matchMedia().add(
-				{
-					reduceMotion: '(prefers-reduced-motion: reduce)',
-					motionOk: '(prefers-reduced-motion: no-preference)',
-				},
-				(context) => {
-					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-					const tl = gsap.timeline({
-						scrollTrigger: {
-							trigger: section,
-							start: 'top 78%',
-							toggleActions: 'play none none reverse',
-						},
-					});
-
-					if (heading) {
-						tl.from(heading, {
-							opacity: 0,
-							y: reduceMotion ? 0 : 16,
-							duration: reduceMotion ? 0.3 : 0.5,
-							ease: 'power2.out',
-						});
-					}
-
-					if (items.length) {
-						// El punto completo (numeral + check + texto) entra como un solo
-						// bloque fade+rise — "el numeral y el check al mismo tiempo" ya sale
-						// gratis al animar el <li> entero en vez de sus partes por separado.
-						tl.from(
-							items,
-							{
-								opacity: 0,
-								y: reduceMotion ? 0 : 20,
-								duration: reduceMotion ? 0.3 : 0.5,
-								ease: 'power2.out',
-								stagger: reduceMotion ? 0 : 0.15,
-							},
-							reduceMotion ? undefined : '-=0.2',
-						);
-					}
-
-					// El check, además, se "tica" con un pop propio superpuesto al mismo
-					// instante en que aparece su punto — refuerza la sensación de "listo,
-					// siguiente" en vez de un fade genérico.
-					if (checks.length && !reduceMotion) {
-						tl.from(
-							checks,
-							{
-								scale: 0.4,
-								duration: 0.4,
-								ease: 'back.out(2)',
-								stagger: 0.15,
-							},
-							'<',
-						);
-					}
-				},
-			);
-		};
-
-		// No se empieza a observar hasta que el Loader se retira: si la sección
-		// ya está por encima de la línea de disparo del ScrollTrigger en el
-		// load, la entrada se reproduciría entera detrás del overlay del Loader
-		// (z-[100], ~1.3s) sin que nadie la vea. `whenLoaderGone` resuelve al
-		// instante si no hay Loader o si ya se ocultó; si no, espera el evento
-		// `juveland:loader-hidden` (con salvavidas por si el Loader falla).
-		const whenLoaderGone = () => {
-			const loader = document.getElementById('loader');
-			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
-			return new Promise<void>((resolve) => {
-				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
-				window.setTimeout(resolve, 4500);
-			});
-		};
-
-		whenLoaderGone().then(() => {
-			if ('IntersectionObserver' in window) {
-				const io = new IntersectionObserver(
-					(entries, obs) => {
-						if (!entries.some((entry) => entry.isIntersecting)) return;
-						obs.disconnect();
-						animate();
-					},
-					{ rootMargin: '200px' },
-				);
-				io.observe(section);
-			} else {
-				animate();
-			}
+		const tl = gsap.timeline({
+			scrollTrigger: {
+				trigger: section,
+				start: 'top 78%',
+				toggleActions: 'play none none reverse',
+			},
 		});
-	}
+
+		if (heading) {
+			tl.from(heading, {
+				opacity: 0,
+				y: reduceMotion ? 0 : 16,
+				duration: reduceMotion ? 0.3 : 0.5,
+				ease: 'power2.out',
+			});
+		}
+
+		if (items.length) {
+			tl.from(
+				items,
+				{
+					opacity: 0,
+					y: reduceMotion ? 0 : 20,
+					duration: reduceMotion ? 0.3 : 0.5,
+					ease: 'power2.out',
+					stagger: reduceMotion ? 0 : 0.15,
+				},
+				reduceMotion ? undefined : '-=0.2',
+			);
+		}
+
+		if (checks.length && !reduceMotion) {
+			tl.from(
+				checks,
+				{
+					scale: 0.4,
+					duration: 0.4,
+					ease: 'back.out(2)',
+					stagger: 0.15,
+				},
+				'<',
+			);
+		}
+	});
 </script>

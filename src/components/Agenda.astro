@@ -98,308 +98,301 @@ import { lineup } from '../data/lineup';
 	// tarjeta del countdown, subtítulo, tiras de la agenda) + "tick/flip
 	// simple" en los dígitos del countdown (DESIGN.md §7).
 	//
-	// Afinación de rendimiento (mismo criterio que Chips/WhyAttend/Bandas):
-	// GSAP + ScrollTrigger ya NO se importan estático. Esta sección está bajo
-	// el pliegue, así que GSAP entra con import() dinámico recién cuando se
-	// acerca al viewport (IntersectionObserver, rootMargin 200px). El chunk de
-	// GSAP ya lo trae Hero/Navbar de forma estática, así que el import()
-	// resuelve desde caché; lo que se difiere es el trabajo, no la descarga.
-	//
-	// El countdown en vivo también arranca aquí dentro: la tarjeta está bajo el
-	// pliegue, así que empezar a tickear recién cuando se acerca es invisible
-	// para el usuario (el primer tick ya pinta la hora correcta, sin flip) y
-	// evita un setInterval corriendo desde el segundo 0 sobre algo que nadie
-	// ve. Además el flip usa gsap, así que igual necesita el import.
-	const section = document.querySelector<HTMLElement>('#agenda');
+	// Andamiaje compartido en src/scripts/reveal.ts: `whenSectionVisible`
+	// espera a que el Loader se retire y a que la sección se acerque al
+	// viewport; `loadScrollGsap` hace el import() diferido de GSAP +
+	// ScrollTrigger (sin modulepreload en la carga inicial). El countdown en
+	// vivo también arranca aquí dentro — la tarjeta está bajo el pliegue, así
+	// que empezar a tickear recién cuando se acerca es invisible para el
+	// usuario y evita un setInterval corriendo desde el segundo 0 sobre algo
+	// que nadie ve. Además, se pausa cuando la tarjeta sale del viewport o la
+	// pestaña queda en segundo plano.
+	import { whenSectionVisible, loadScrollGsap } from '../scripts/reveal';
 
-	if (section) {
-		const start = async () => {
-			const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-				import('gsap'),
-				import('gsap/ScrollTrigger'),
-			]);
-			gsap.registerPlugin(ScrollTrigger);
+	whenSectionVisible('#agenda').then(async (section) => {
+		if (!section) return;
+		const { gsap } = await loadScrollGsap();
 
-			const heading = section.querySelector<HTMLElement>('.agenda-heading');
-			const headingTitle = section.querySelector<HTMLElement>('.agenda-heading h2');
-			const countdownCard = section.querySelector<HTMLElement>('.countdown-card');
-			const subheading = section.querySelector<HTMLElement>('.agenda-subheading');
-			const agendaItems = Array.from(section.querySelectorAll<HTMLElement>('.agenda-item'));
+		const heading = section.querySelector<HTMLElement>('.agenda-heading');
+		const headingTitle = section.querySelector<HTMLElement>('.agenda-heading h2');
+		const countdownCard = section.querySelector<HTMLElement>('.countdown-card');
+		const subheading = section.querySelector<HTMLElement>('.agenda-subheading');
+		const agendaItems = Array.from(section.querySelectorAll<HTMLElement>('.agenda-item'));
 
-			// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
-			gsap.matchMedia().add(
-				{
-					reduceMotion: '(prefers-reduced-motion: reduce)',
-					motionOk: '(prefers-reduced-motion: no-preference)',
-				},
-				(context) => {
-					const { reduceMotion } = context.conditions as { reduceMotion: boolean };
+		// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
+		gsap.matchMedia().add(
+			{
+				reduceMotion: '(prefers-reduced-motion: reduce)',
+				motionOk: '(prefers-reduced-motion: no-preference)',
+			},
+			(context) => {
+				const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-					const tl = gsap.timeline({
-						scrollTrigger: {
-							trigger: section,
-							start: 'top 78%',
-							toggleActions: 'play none none reverse',
-						},
+				const tl = gsap.timeline({
+					scrollTrigger: {
+						trigger: section,
+						start: 'top 78%',
+						toggleActions: 'play none none reverse',
+					},
+				});
+
+				if (heading) {
+					tl.from(heading, {
+						opacity: 0,
+						y: reduceMotion ? 0 : 16,
+						duration: reduceMotion ? 0.3 : 0.5,
+						ease: 'power2.out',
 					});
-
-					if (heading) {
-						tl.from(heading, {
-							opacity: 0,
-							y: reduceMotion ? 0 : 16,
-							duration: reduceMotion ? 0.3 : 0.5,
-							ease: 'power2.out',
-						});
-					}
-
-					if (countdownCard) {
-						// Un poco de pop (back.out) en vez de un fade plano — es la pieza
-						// central de la sección, el "tag" con la cuenta regresiva.
-						tl.from(
-							countdownCard,
-							{
-								opacity: 0,
-								y: reduceMotion ? 0 : 20,
-								scale: reduceMotion ? 1 : 0.9,
-								duration: reduceMotion ? 0.3 : 0.5,
-								ease: 'back.out(1.6)',
-							},
-							reduceMotion ? undefined : '-=0.2',
-						);
-					}
-
-					if (subheading) {
-						tl.from(subheading, {
-							opacity: 0,
-							y: reduceMotion ? 0 : 16,
-							duration: reduceMotion ? 0.3 : 0.5,
-							ease: 'power2.out',
-						});
-					}
-
-					if (agendaItems.length) {
-						// Intercaladas izquierda/derecha (índice par entra desde la
-						// izquierda, impar desde la derecha) en vez del fade+rise vertical
-						// que usan el resto de las secciones — les da su propio ritmo, como
-						// tiras de boleto repartiéndose de un mazo.
-						tl.from(
-							agendaItems,
-							{
-								opacity: 0,
-								x: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -60 : 60),
-								y: 0,
-								duration: reduceMotion ? 0.3 : 0.55,
-								ease: 'power2.out',
-								stagger: reduceMotion ? 0 : 0.08,
-							},
-							reduceMotion ? undefined : '-=0.2',
-						);
-					}
-				},
-			);
-
-			// --- Fase: upcoming (cuenta regresiva) / live ("En vivo") / ended
-			//     ("¡Gracias por venir!") — DESIGN.md §6. Todas se calculan contra
-			//     la hora objetivo fija en -06:00, no la zona del visitante.
-			const wrapper = document.getElementById('countdown-numbers');
-			const target = new Date(wrapper?.dataset.target ?? '');
-			// El line-up corre 14:00–22:00 (The Sinners cierra). Se mantiene "En
-			// vivo" hasta la medianoche y de ahí en adelante pasa a "Gracias".
-			const endOfEvent = target.getTime() + 10 * 60 * 60 * 1000;
-
-			type Slot = { t: string; n: string };
-			let schedule: Slot[] = [];
-			try {
-				schedule = JSON.parse(wrapper?.dataset.schedule ?? '[]');
-			} catch {
-				schedule = [];
-			}
-
-			const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-			const phaseOf = (now: number): 'upcoming' | 'live' | 'ended' =>
-				now < target.getTime() ? 'upcoming' : now < endOfEvent ? 'live' : 'ended';
-
-			// Banda en el escenario ahora: último horario del line-up que ya pasó.
-			// Aritmética pura sobre `target` (= primer horario) para no depender
-			// de la zona horaria del visitante.
-			const currentAct = (now: number): string => {
-				const first = schedule[0];
-				if (!first) return '';
-				const toMs = (hhmm: string) => {
-					const [h, m] = hhmm.split(':').map(Number);
-					return (h * 60 + m) * 60 * 1000;
-				};
-				const anchor = target.getTime() - toMs(first.t);
-				let act = first.n;
-				for (const slot of schedule) {
-					if (now >= anchor + toMs(slot.t)) act = slot.n;
 				}
-				return act;
-			};
 
-			let watchId: ReturnType<typeof setInterval> | undefined;
-			let countdownId: ReturnType<typeof setInterval> | undefined;
+				if (countdownCard) {
+					// Un poco de pop (back.out) en vez de un fade plano — es la pieza
+					// central de la sección, el "tag" con la cuenta regresiva.
+					tl.from(
+						countdownCard,
+						{
+							opacity: 0,
+							y: reduceMotion ? 0 : 20,
+							scale: reduceMotion ? 1 : 0.9,
+							duration: reduceMotion ? 0.3 : 0.5,
+							ease: 'back.out(1.6)',
+						},
+						reduceMotion ? undefined : '-=0.2',
+					);
+				}
 
-			const renderEnded = () => {
-				if (headingTitle) headingTitle.textContent = '¡Gracias por venir!';
-				if (!countdownCard) return;
-				countdownCard.innerHTML = `
-					<span class="font-headline text-xs font-bold tracking-wide text-ink/70 uppercase lg:text-sm">29 de agosto de 2026</span>
-					<span class="font-display text-3xl font-bold text-ink sm:text-4xl lg:text-5xl">¡Gracias por venir!</span>
-					<span class="font-body text-sm text-ink/70 lg:text-base">Gracias a todas y todos por acompañarnos.</span>
-				`;
-			};
-
-			const updateAct = () => {
-				const el = countdownCard?.querySelector<HTMLElement>('[data-live-act]');
-				if (!el) return;
-				const act = currentAct(Date.now());
-				el.textContent = act ? `En el escenario: ${act}` : 'El festival está pasando en la Alameda';
-			};
-
-			const renderLive = () => {
-				if (headingTitle) headingTitle.textContent = '¡Es hoy!';
-				if (!countdownCard) return;
-				countdownCard.classList.remove('bg-lime');
-				countdownCard.classList.add('bg-red');
-				countdownCard.innerHTML = `
-					<div class="flex items-center gap-xs">
-						<span class="countdown-live-dot inline-block h-2.5 w-2.5 rounded-full bg-cream lg:h-3 lg:w-3"></span>
-						<span class="font-headline text-sm font-extrabold tracking-widest text-cream uppercase lg:text-base">En vivo</span>
-					</div>
-					<span class="font-display text-3xl font-bold text-cream sm:text-4xl lg:text-5xl">¡Ya empezó!</span>
-					<span class="font-body text-sm text-cream/85 lg:text-base" data-live-act></span>
-				`;
-				const dot = countdownCard.querySelector<HTMLElement>('.countdown-live-dot');
-				if (dot && !reduceMotion) {
-					gsap.to(dot, {
-						opacity: 0.3,
-						scale: 0.6,
-						duration: 0.7,
-						repeat: -1,
-						yoyo: true,
-						ease: 'sine.inOut',
+				if (subheading) {
+					tl.from(subheading, {
+						opacity: 0,
+						y: reduceMotion ? 0 : 16,
+						duration: reduceMotion ? 0.3 : 0.5,
+						ease: 'power2.out',
 					});
+				}
+
+				if (agendaItems.length) {
+					// Intercaladas izquierda/derecha (índice par entra desde la
+					// izquierda, impar desde la derecha) en vez del fade+rise vertical
+					// que usan el resto de las secciones — les da su propio ritmo, como
+					// tiras de boleto repartiéndose de un mazo.
+					tl.from(
+						agendaItems,
+						{
+							opacity: 0,
+							x: reduceMotion ? 0 : (i: number) => (i % 2 === 0 ? -60 : 60),
+							y: 0,
+							duration: reduceMotion ? 0.3 : 0.55,
+							ease: 'power2.out',
+							stagger: reduceMotion ? 0 : 0.08,
+						},
+						reduceMotion ? undefined : '-=0.2',
+					);
+				}
+			},
+		);
+
+		// --- Fase: upcoming (cuenta regresiva) / live ("En vivo") / ended
+		//     ("¡Gracias por venir!") — DESIGN.md §6. Todas se calculan contra
+		//     la hora objetivo fija en -06:00, no la zona del visitante.
+		const wrapper = document.getElementById('countdown-numbers');
+		const target = new Date(wrapper?.dataset.target ?? '');
+		// El line-up corre 14:00–22:00 (The Sinners cierra). Se mantiene "En
+		// vivo" hasta la medianoche y de ahí en adelante pasa a "Gracias".
+		const endOfEvent = target.getTime() + 10 * 60 * 60 * 1000;
+
+		type Slot = { t: string; n: string };
+		let schedule: Slot[] = [];
+		try {
+			schedule = JSON.parse(wrapper?.dataset.schedule ?? '[]');
+		} catch {
+			schedule = [];
+		}
+
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		const phaseOf = (now: number): 'upcoming' | 'live' | 'ended' =>
+			now < target.getTime() ? 'upcoming' : now < endOfEvent ? 'live' : 'ended';
+
+		// Banda en el escenario ahora: último horario del line-up que ya pasó.
+		// Aritmética pura sobre `target` (= primer horario) para no depender
+		// de la zona horaria del visitante.
+		const currentAct = (now: number): string => {
+			const first = schedule[0];
+			if (!first) return '';
+			const toMs = (hhmm: string) => {
+				const [h, m] = hhmm.split(':').map(Number);
+				return (h * 60 + m) * 60 * 1000;
+			};
+			const anchor = target.getTime() - toMs(first.t);
+			let act = first.n;
+			for (const slot of schedule) {
+				if (now >= anchor + toMs(slot.t)) act = slot.n;
+			}
+			return act;
+		};
+
+		let watchId: ReturnType<typeof setInterval> | undefined;
+		let countdownId: ReturnType<typeof setInterval> | undefined;
+
+		const renderEnded = () => {
+			if (headingTitle) headingTitle.textContent = '¡Gracias por venir!';
+			if (!countdownCard) return;
+			countdownCard.innerHTML = `
+				<span class="font-headline text-xs font-bold tracking-wide text-ink/70 uppercase lg:text-sm">29 de agosto de 2026</span>
+				<span class="font-display text-3xl font-bold text-ink sm:text-4xl lg:text-5xl">¡Gracias por venir!</span>
+				<span class="font-body text-sm text-ink/70 lg:text-base">Gracias a todas y todos por acompañarnos.</span>
+			`;
+		};
+
+		const updateAct = () => {
+			const el = countdownCard?.querySelector<HTMLElement>('[data-live-act]');
+			if (!el) return;
+			const act = currentAct(Date.now());
+			el.textContent = act ? `En el escenario: ${act}` : 'El festival está pasando en la Alameda';
+		};
+
+		const renderLive = () => {
+			if (headingTitle) headingTitle.textContent = '¡Es hoy!';
+			if (!countdownCard) return;
+			countdownCard.classList.remove('bg-lime');
+			countdownCard.classList.add('bg-red');
+			countdownCard.innerHTML = `
+				<div class="flex items-center gap-xs">
+					<span class="countdown-live-dot inline-block h-2.5 w-2.5 rounded-full bg-cream lg:h-3 lg:w-3"></span>
+					<span class="font-headline text-sm font-extrabold tracking-widest text-cream uppercase lg:text-base">En vivo</span>
+				</div>
+				<span class="font-display text-3xl font-bold text-cream sm:text-4xl lg:text-5xl">¡Ya empezó!</span>
+				<span class="font-body text-sm text-cream/85 lg:text-base" data-live-act></span>
+			`;
+			const dot = countdownCard.querySelector<HTMLElement>('.countdown-live-dot');
+			if (dot && !reduceMotion) {
+				gsap.to(dot, {
+					opacity: 0.3,
+					scale: 0.6,
+					duration: 0.7,
+					repeat: -1,
+					yoyo: true,
+					ease: 'sine.inOut',
+				});
+			}
+			updateAct();
+		};
+
+		const watchForEnd = () => {
+			watchId = setInterval(() => {
+				if (phaseOf(Date.now()) === 'ended') {
+					if (watchId) clearInterval(watchId);
+					renderEnded();
+					return;
 				}
 				updateAct();
-			};
+			}, 60 * 1000);
+		};
 
-			const watchForEnd = () => {
-				watchId = setInterval(() => {
-					if (phaseOf(Date.now()) === 'ended') {
-						if (watchId) clearInterval(watchId);
-						renderEnded();
-						return;
-					}
-					updateAct();
-				}, 60 * 1000);
-			};
+		const phase = phaseOf(Date.now());
 
-			const phase = phaseOf(Date.now());
+		if (phase === 'ended') {
+			renderEnded();
+			return;
+		}
 
-			if (phase === 'ended') {
-				renderEnded();
+		if (phase === 'live') {
+			renderLive();
+			watchForEnd();
+			return;
+		}
+
+		// --- phase === 'upcoming': cuenta regresiva en vivo con tick/flip --
+		const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
+		const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
+		const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
+		const seconds = wrapper?.querySelector<HTMLElement>('[data-unit="seconds"]');
+
+		const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
+		gsap.set(digitEls, { transformPerspective: 300 });
+
+		// El primer render (de "00" al valor real) no lleva flip: si no,
+		// compite con el fade+rise de entrada de arriba, que corre justo
+		// cuando esta tarjeta recién se vuelve visible por primera vez.
+		let isFirstTick = true;
+
+		// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
+		// quedar de canto (invisible un instante), ahí se cambia el texto, y
+		// termina de girar del otro lado — dos giros cortos, no un flip-clock
+		// de dos paneles, pero da la misma sensación de "voltear" sin duplicar
+		// el DOM de cada dígito.
+		const setDigit = (el: HTMLElement | null | undefined, value: string) => {
+			if (!el || el.textContent === value) return;
+
+			if (isFirstTick || reduceMotion) {
+				el.textContent = value;
 				return;
 			}
 
-			if (phase === 'live') {
+			gsap.to(el, {
+				rotationX: -90,
+				duration: 0.15,
+				ease: 'power1.in',
+				onComplete: () => {
+					el.textContent = value;
+					gsap.fromTo(el, { rotationX: 90 }, { rotationX: 0, duration: 0.15, ease: 'power1.out' });
+				},
+			});
+		};
+
+		const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
+
+		const tick = () => {
+			const diff = target.getTime() - Date.now();
+
+			if (diff <= 0) {
+				stopCountdown();
 				renderLive();
 				watchForEnd();
 				return;
 			}
 
-			// --- phase === 'upcoming': cuenta regresiva en vivo con tick/flip --
-			const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
-			const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
-			const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
-			const seconds = wrapper?.querySelector<HTMLElement>('[data-unit="seconds"]');
+			const totalSeconds = Math.floor(diff / 1000);
+			setDigit(days, pad(Math.floor(totalSeconds / 86400)));
+			setDigit(hours, pad(Math.floor((totalSeconds % 86400) / 3600)));
+			setDigit(minutes, pad(Math.floor((totalSeconds % 3600) / 60)));
+			setDigit(seconds, pad(totalSeconds % 60));
+			isFirstTick = false;
+		};
 
-			const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
-			gsap.set(digitEls, { transformPerspective: 300 });
+		// Pausa/reanuda el intervalo de 1s: no tiene sentido tickear (y menos
+		// disparar flips con GSAP) mientras la tarjeta está fuera de pantalla o
+		// la pestaña está en segundo plano.
+		let inView = true;
 
-			// El primer render (de "00" al valor real) no lleva flip: si no,
-			// compite con el fade+rise de entrada de arriba, que corre justo
-			// cuando esta tarjeta recién se vuelve visible por primera vez.
-			let isFirstTick = true;
+		function stopCountdown() {
+			if (countdownId !== undefined) {
+				clearInterval(countdownId);
+				countdownId = undefined;
+			}
+		}
 
-			// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
-			// quedar de canto (invisible un instante), ahí se cambia el texto, y
-			// termina de girar del otro lado — dos giros cortos, no un flip-clock
-			// de dos paneles, pero da la misma sensación de "voltear" sin duplicar
-			// el DOM de cada dígito.
-			const setDigit = (el: HTMLElement | null | undefined, value: string) => {
-				if (!el || el.textContent === value) return;
-
-				if (isFirstTick || reduceMotion) {
-					el.textContent = value;
-					return;
-				}
-
-				gsap.to(el, {
-					rotationX: -90,
-					duration: 0.15,
-					ease: 'power1.in',
-					onComplete: () => {
-						el.textContent = value;
-						gsap.fromTo(el, { rotationX: 90 }, { rotationX: 0, duration: 0.15, ease: 'power1.out' });
-					},
-				});
-			};
-
-			const pad = (n: number) => String(Math.max(n, 0)).padStart(2, '0');
-
-			const tick = () => {
-				const diff = target.getTime() - Date.now();
-
-				if (diff <= 0) {
-					if (countdownId) clearInterval(countdownId);
-					renderLive();
-					watchForEnd();
-					return;
-				}
-
-				const totalSeconds = Math.floor(diff / 1000);
-				setDigit(days, pad(Math.floor(totalSeconds / 86400)));
-				setDigit(hours, pad(Math.floor((totalSeconds % 86400) / 3600)));
-				setDigit(minutes, pad(Math.floor((totalSeconds % 3600) / 60)));
-				setDigit(seconds, pad(totalSeconds % 60));
-				isFirstTick = false;
-			};
-
+		function startCountdown() {
+			if (countdownId !== undefined) return;
+			if (phaseOf(Date.now()) !== 'upcoming') return;
 			tick();
 			countdownId = setInterval(tick, 1000);
-		};
+		}
 
-		// No se empieza a observar hasta que el Loader se retira: si la sección
-		// ya está por encima de la línea de disparo del ScrollTrigger en el
-		// load, la entrada se reproduciría entera detrás del overlay del Loader
-		// (z-[100], ~1.3s) sin que nadie la vea. `whenLoaderGone` resuelve al
-		// instante si no hay Loader o si ya se ocultó; si no, espera el evento
-		// `juveland:loader-hidden` (con salvavidas por si el Loader falla).
-		const whenLoaderGone = () => {
-			const loader = document.getElementById('loader');
-			if (!loader || loader.dataset.hidden === 'true') return Promise.resolve();
-			return new Promise<void>((resolve) => {
-				window.addEventListener('juveland:loader-hidden', () => resolve(), { once: true });
-				window.setTimeout(resolve, 4500);
+		startCountdown();
+
+		if ('IntersectionObserver' in window) {
+			const vis = new IntersectionObserver((entries) => {
+				inView = entries.some((entry) => entry.isIntersecting);
+				if (inView && !document.hidden) startCountdown();
+				else stopCountdown();
 			});
-		};
+			vis.observe(countdownCard ?? section);
+		}
 
-		whenLoaderGone().then(() => {
-			if ('IntersectionObserver' in window) {
-				const io = new IntersectionObserver(
-					(entries, obs) => {
-						if (!entries.some((entry) => entry.isIntersecting)) return;
-						obs.disconnect();
-						start();
-					},
-					{ rootMargin: '200px' },
-				);
-				io.observe(section);
-			} else {
-				start();
-			}
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden || !inView) stopCountdown();
+			else startCountdown();
 		});
-	}
+	});
 </script>

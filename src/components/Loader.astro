@@ -1,39 +1,42 @@
 ---
 // Loader — PLAN.md Pasada 1, paso 3 / DESIGN.md §6-7.
-// Overlay cream a pantalla completa. Pasada 2 agrega el crossfade + leve
-// escala entre el logo de IMJUVE y el de Jilotepec Pueblo Mágico (DESIGN.md
-// §7: "no es un morph de paths — un crossfade con leve escala se ve casi
-// igual de pulido y no mete complejidad de licencia"). Por eso los dos logos
-// viven apilados en la misma celda de un grid (en vez de uno junto al otro
-// con un "×" como en Pasada 1) — el crossfade sustituye a un morph, así que
-// tienen que ocupar el mismo lugar, no dos lugares distintos.
+// Overlay cream a pantalla completa con un crossfade + leve escala entre el
+// logo de IMJUVE y el de Jilotepec Pueblo Mágico (DESIGN.md §7: "no es un morph
+// de paths — un crossfade con leve escala se ve casi igual de pulido"). Por eso
+// los dos logos viven apilados en la misma celda de un grid.
 //
-// Si el JS nunca carga: el logo de Pueblo Mágico ya sale con `opacity-0`
-// como clase estática (no depende de que corra el script), así que sin JS se
-// ve un único logo de IMJUVE legible en vez de dos encimados e ilegibles.
+// El crossfade y el fundido de salida son CSS puro (antes GSAP): el Loader es
+// lo PRIMERO que se pinta, así que arrastrar ~113KB de GSAP al primer frame por
+// una animación decorativa iba en contra de la prioridad #1 del sitio (cargar
+// rápido en celular mediano). Ahora GSAP es 100% diferido en todo el sitio.
+//   · Crossfade: `@keyframes loader-cross`, el logo de Pueblo Mágico desfasado
+//     media vuelta (`animation-delay: -2.2s`) para que uno esté a opacidad 0
+//     mientras el otro está a 1. Con `prefers-reduced-motion: reduce` no se
+//     aplica ninguna animación y queda el logo de IMJUVE fijo y legible.
+//   · Salida: `transition: opacity` en `#loader` (0.15s con reduced-motion),
+//     y `display:none` en `transitionend` con un salvavidas por tiempo.
 //
-// El script tenía un tope MÁXIMO de espera (4s, para conexiones lentas) pero
-// ningún mínimo — en una carga rápida (que es casi siempre, el sitio pesa
-// poco) se ocultaba casi al instante, demasiado rápido para verlo incluso
-// forzando throttling. `MIN_VISIBLE_MS` garantiza que se quede en pantalla
-// al menos ese tiempo sin importar qué tan rápido termine de cargar todo.
+// Si el JS nunca carga: el logo de Pueblo Mágico ya sale con `opacity-0` como
+// clase estática, así que sin JS se ve un único logo de IMJUVE legible en vez
+// de dos encimados. El overlay se quedaría visible (sin JS que lo oculte), pero
+// el `<slot>` de la página vive debajo y la animación de secciones degrada sola.
 //
-// El Hero estampa "JUVELAND" letra por letra con SplitText, pero este overlay
-// (z-[100], pantalla completa) lo tapa mientras está visible — así que si esa
-// animación corre antes de tiempo, pasa entera detrás del cream y el usuario
-// nunca la ve (el bug de "las letras ya no animan": no viene de Hero.astro,
-// viene de este timing). Para evitarlo, `hide()` emite el evento
-// `juveland:loader-hidden` (y deja `data-hidden="true"` en el nodo, por si
-// Hero llega a escuchar tarde) justo al empezar a desvanecerse, y Hero.astro
-// espera esa señal —además de `document.fonts.ready`— antes de dividir el
-// título. Antes el loader se saltaba en visitas repetidas (flag en
-// localStorage); ahora no se salta, solo se acorta (`MIN_VISIBLE_MS`).
+// El script tiene un tope MÁXIMO de espera (`MAX_WAIT_MS`, conexiones lentas) y
+// un mínimo (`MIN_VISIBLE_MS`) para que en cargas rápidas no desaparezca antes
+// de que se alcance a ver. En visitas repetidas (flag en localStorage) solo se
+// acorta, no se salta.
 //
-// `loading="eager"` en los dos logos: son lo primero que se ve (antes que
-// cualquier otra cosa de la página), así que el `loading="lazy"` por
-// defecto de <Image> es contraproducente — le baja prioridad de carga a
-// algo que ya está en pantalla. El audit de Astro marca esto como
-// "unoptimized loading attribute" en cualquier imagen arriba del pliegue.
+// El Hero estampa "JUVELAND" letra por letra y las islas de sección tienen
+// entradas con ScrollTrigger que ya nacen por encima de su línea de disparo:
+// mientras este overlay (z-[100]) las tapa, esas animaciones pasarían enteras
+// sin que nadie las viera. Por eso `hide()` deja `data-hidden="true"` en el
+// nodo y emite `juveland:loader-hidden` justo al empezar a desvanecerse — la
+// señal que esos scripts esperan (helper `whenLoaderGone` en src/scripts/).
+//
+// `loading="eager"` en los dos logos: son lo primero que se ve, así que el
+// `loading="lazy"` por defecto de <Image> es contraproducente. El audit de
+// Astro marca esto como "unoptimized loading attribute" en imágenes arriba
+// del pliegue.
 import { Image } from 'astro:assets';
 import logoImjuve from '../assets/hero/simbolo-imjuve.png';
 import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
@@ -56,90 +59,101 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 			class="loader-logo loader-logo-pueblo col-start-1 row-start-1 h-auto w-16 opacity-0 sm:w-24 lg:w-28"
 		/>
 	</div>
-	<p class="font-headline text-xs font-bold tracking-wide text-ink/50 uppercase">Cargando…</p>
+	<p class="font-headline text-xs font-bold tracking-wide text-ink/65 uppercase">Cargando…</p>
 </div>
 
-<script>
-	import { gsap } from 'gsap';
+<style>
+	#loader {
+		transition: opacity 0.4s ease;
+	}
 
+	/* Crossfade decorativo — solo con movimiento permitido. Sin esto (reduced
+	 * motion o motor sin soporte), el logo de IMJUVE queda fijo y el de Pueblo
+	 * Mágico oculto por su clase estática `opacity-0`. */
+	@media (prefers-reduced-motion: no-preference) {
+		.loader-logo {
+			animation: loader-cross 4.4s ease-in-out infinite;
+		}
+		.loader-logo-pueblo {
+			/* Media vuelta de desfase: arranca a mitad del ciclo (opacidad 0)
+			 * mientras el de IMJUVE arranca a opacidad 1. El delay negativo hace
+			 * que la animación nazca "ya corriendo", sin flash inicial. */
+			animation-delay: -2.2s;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#loader {
+			transition-duration: 0.15s;
+		}
+	}
+
+	@keyframes loader-cross {
+		0%,
+		100% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		45%,
+		55% {
+			opacity: 0;
+			transform: scale(0.92);
+		}
+	}
+</style>
+
+<script>
 	const STORAGE_KEY = 'juveland:loader-seen';
-	const seenBefore = localStorage.getItem(STORAGE_KEY) === '1';
-	// Primera visita: 1.3s. Visitas repetidas: más corto, pero no tan corto
-	// como para no alcanzar a ver nada del crossfade (ver el <script> de
-	// abajo) — con 500ms el loader se ocultaba justo cuando el primer
-	// crossfade apenas iba arrancando, así que nunca se veía moverse.
-	const MIN_VISIBLE_MS = seenBefore ? 900 : 1300;
+
+	const readSeen = () => {
+		try {
+			return localStorage.getItem(STORAGE_KEY) === '1';
+		} catch {
+			return false;
+		}
+	};
+	const markSeen = () => {
+		try {
+			localStorage.setItem(STORAGE_KEY, '1');
+		} catch {
+			// Modo privado / storage bloqueado — el loader solo saldrá con la
+			// duración de "primera visita" siempre. Inocuo.
+		}
+	};
+
+	// Primera visita: 1.3s. Visitas repetidas: más corto, pero no tanto como
+	// para no alcanzar a ver el crossfade.
+	const MIN_VISIBLE_MS = readSeen() ? 900 : 1300;
 	const MAX_WAIT_MS = 4000;
 
 	const loader = document.getElementById('loader');
-	const imjuve = document.querySelector<HTMLElement>('.loader-logo-imjuve');
-	const pueblo = document.querySelector<HTMLElement>('.loader-logo-pueblo');
 
 	if (loader) {
-		let crossfade: ReturnType<typeof gsap.timeline> | null = null;
-
-		// Mismo patrón que Navbar/Hero/Chips/WhyAttend: dos condiciones
-		// mutuamente excluyentes que cubren el 100% de los casos.
-		gsap.matchMedia().add(
-			{
-				reduceMotion: '(prefers-reduced-motion: reduce)',
-				motionOk: '(prefers-reduced-motion: no-preference)',
-			},
-			(context) => {
-				const { reduceMotion } = context.conditions as { reduceMotion: boolean };
-
-				// El loop es puramente decorativo (no hay información que perder),
-				// así que con reduced-motion se queda en su estado inicial estático
-				// (IMJUVE visible) en vez de correr el crossfade con duración cero.
-				if (reduceMotion || !imjuve || !pueblo) return;
-
-				gsap.set(pueblo, { scale: 0.92 });
-
-				// Arranca en t=0, sin pausa inicial: el loader suele estar visible
-				// muy poco tiempo (sobre todo en visitas repetidas, ver
-				// MIN_VISIBLE_MS arriba), así que cualquier demora antes del primer
-				// crossfade corre el riesgo real de que el loader se oculte antes de
-				// que se alcance a ver — exactamente el bug que reportó el usuario
-				// (con `'+=0.5'` aquí, nunca llegaba a arrancar a tiempo).
-				crossfade = gsap
-					.timeline({ repeat: -1 })
-					.to(imjuve, { opacity: 0, scale: 0.92, duration: 1.5, ease: 'power1.inOut' })
-					.to(pueblo, { opacity: 1, scale: 1, duration: 1.5, ease: 'power1.inOut' }, '<')
-					.to(imjuve, { opacity: 1, scale: 1, duration: 1.5, ease: 'power1.inOut' }, '+=0.3')
-					.to(pueblo, { opacity: 0, scale: 0.92, duration: 1.5, ease: 'power1.inOut' }, '<');
-			},
-		);
-
 		const shownAt = Date.now();
 		let hidden = false;
 
 		const hide = () => {
 			if (hidden) return;
 			hidden = true;
-			const elapsed = Date.now() - shownAt;
-			const wait = Math.max(MIN_VISIBLE_MS - elapsed, 0);
+			const wait = Math.max(MIN_VISIBLE_MS - (Date.now() - shownAt), 0);
 
 			window.setTimeout(() => {
-				crossfade?.kill();
-				const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-				// Señal para Hero.astro: recién ahora que el overlay empieza a irse
-				// tiene sentido que "JUVELAND" se estampe letra por letra — mientras
-				// este overlay cream lo tapaba, la animación pasaba entera sin que
-				// nadie la viera. El flag en dataset cubre el caso de que Hero
-				// adjunte su listener después de este dispatch.
+				// Señal para Hero.astro y las islas de sección (helper
+				// `whenLoaderGone`): recién ahora que el overlay empieza a irse
+				// tiene sentido que sus entradas se reproduzcan. El flag en
+				// dataset cubre el caso de que un listener se adjunte tarde.
 				loader.dataset.hidden = 'true';
 				window.dispatchEvent(new CustomEvent('juveland:loader-hidden'));
+				markSeen();
 
-				gsap.to(loader, {
-					opacity: 0,
-					duration: reduceMotion ? 0.15 : 0.4,
-					ease: 'power1.out',
-					onComplete: () => {
-						loader.style.display = 'none';
-					},
-				});
-				localStorage.setItem(STORAGE_KEY, '1');
+				loader.style.opacity = '0';
+				const done = () => {
+					loader.style.display = 'none';
+				};
+				loader.addEventListener('transitionend', done, { once: true });
+				// Salvavidas: si `transitionend` no dispara (opacidad ya en 0,
+				// motor sin transiciones), ocultar igual pasado su tiempo.
+				window.setTimeout(done, 600);
 			}, wait);
 		};
 
@@ -148,12 +162,10 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 				? Promise.resolve()
 				: new Promise<void>((resolve) => window.addEventListener('load', () => resolve()));
 
-		// Ver el comentario de arriba: se espera tanto a que cargue la página
-		// como a que las fuentes estén listas, que es justo la señal que usa
-		// Hero.astro para empezar a dividir "JUVELAND" en letras.
+		// Se espera tanto a que cargue la página como a que las fuentes estén
+		// listas (la misma señal que usa Hero.astro para dividir "JUVELAND").
 		Promise.all([pageLoaded, document.fonts.ready]).then(hide);
-		// Tope de seguridad — nunca deja al usuario atorado más de 4s en
-		// conexiones lentas o si alguna de las promesas de arriba no resuelve.
+		// Tope de seguridad — nunca deja al usuario atorado más de 4s.
 		window.setTimeout(hide, MAX_WAIT_MS);
 	}
 </script>
