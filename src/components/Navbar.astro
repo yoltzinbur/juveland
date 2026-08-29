@@ -144,10 +144,12 @@ import { navLinks } from '../data/nav';
 
 	// Los links del menú saltan a una sección (#ancla). NO se cierra con
 	// history.back(): al volver atrás el navegador restaura la posición de
-	// scroll previa (arriba del todo) *después* del popstate, pisando el
-	// salto al ancla. En su lugar se reemplaza la entrada del menú por la de la
-	// sección y se hace el scroll a mano: el historial queda [página] →
-	// [#sección] y un solo "atrás" regresa limpio.
+	// scroll previa *después* del popstate, pisando el salto al ancla. En su
+	// lugar se reemplaza la entrada del menú por la de la sección y se hace el
+	// scroll a mano: el historial queda [página] → [#sección] y un solo
+	// "atrás" regresa a esa entrada sin re-saltar (Layout fija
+	// `history.scrollRestoration = 'manual'`, así que back / forward ya no
+	// mueven el viewport por su cuenta).
 	sheetLinks.forEach((link) =>
 		link.addEventListener('click', (event) => {
 			const href = link.getAttribute('href');

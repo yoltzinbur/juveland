@@ -33,6 +33,17 @@ const ogImage = new URL('/og.png', Astro.site).href;
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		{/* El sitio maneja su propio scroll a las secciones (Navbar hace
+		   `scrollIntoView` a mano al elegir un link del menú). Sin esto, los
+		   overlays modales (menú de Navbar, InfoSheet) que se cierran con
+		   `history.back()` disparan la restauración de scroll del navegador y
+		   saltan el viewport a la última sección visitada por #ancla — cerrar un
+		   diálogo no debe mover la página. `manual` desactiva solo ese
+		   restaurado de back/forward; los links `#ancla` normales siguen
+		   desplazándose igual. */}
+		<script is:inline>history.scrollRestoration = 'manual';</script>
+
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta name="theme-color" content="#faf9f7" />
