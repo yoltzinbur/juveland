@@ -50,13 +50,13 @@ import ArcDivider from './ArcDivider.astro';
 import { lineup } from '../data/lineup';
 ---
 
-<!-- `overflow-x-clip`: la animación de entrada de las tarjetas (rotación ±10°
+{/* `overflow-x-clip`: la animación de entrada de las tarjetas (rotación ±10°
      + scale 0.8 vía gsap.from, que se pinta en immediateRender apenas carga la
      página, mucho antes de que el ScrollTrigger dispare) hace que las esquinas
      giradas se salgan del borde derecho y aparezca scroll horizontal en móvil
      hasta que la animación termina. `clip` lo contiene sin crear un contenedor
      de scroll ni afectar el eje vertical (a diferencia de `overflow-hidden`,
-     que rompería `position: sticky` y recortaría el arco). -->
+     que rompería `position: sticky` y recortaría el arco). */}
 <section id="bandas" class="relative overflow-x-clip">
 	<ArcDivider fillClass="fill-ink" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 

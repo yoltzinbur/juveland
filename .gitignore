@@ -30,6 +30,8 @@ pnpm-debug.log*
 # guidance for the team); only the local planning docs stay out.
 .claude
 PLAN.md
+CLAUDE.md
+AGENTS.md
 
 # impeccable 
 DESIGN.md

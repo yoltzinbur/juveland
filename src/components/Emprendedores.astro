@@ -49,13 +49,13 @@ import ArcDivider from './ArcDivider.astro';
 import { emprendedores } from '../data/emprendedores';
 ---
 
-<!-- `overflow-x-clip`: la animación de entrada rota las tarjetas ±10° (gsap.from,
+{/* `overflow-x-clip`: la animación de entrada rota las tarjetas ±10° (gsap.from,
      que se pinta en immediateRender apenas carga la página, antes de que el
      ScrollTrigger dispare), así que las esquinas giradas asoman por el borde
      derecho y aparece scroll horizontal en móvil hasta que la animación
      termina. `clip` lo contiene sin crear un contenedor de scroll ni afectar
      el eje vertical (a diferencia de `overflow-hidden`, que recortaría el
-     arco). Mismo criterio que Bandas/Agenda. -->
+     arco). Mismo criterio que Bandas/Agenda. */}
 <section id="emprendedores" class="relative overflow-x-clip">
 	<ArcDivider fillClass="fill-green" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 
