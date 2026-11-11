@@ -6,7 +6,9 @@ Landing del **1er Festival de las Juventudes de Jilotepec** (IMJUVE Jilotepec), 
 
 Astro · Tailwind CSS v4 · GSAP · TypeScript · Vercel
 
-<!-- Agrega aquí una captura o GIF del hero en móvil: ![Juveland en móvil](docs/preview.png) -->
+<p align="center">
+  <img src="docs/preview.gif" alt="Hero de Juveland en un celular: el título se estampa letra por letra y las mascotas saltan" width="280" />
+</p>
 
 ## El reto
 
