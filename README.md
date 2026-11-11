@@ -1,207 +1,57 @@
-<div align="center">
+# Juveland
 
-# 🎡 JUVELAND
+Landing del **1er Festival de las Juventudes de Jilotepec** (IMJUVE Jilotepec), celebrado el 29 de agosto de 2026 en la Alameda de Jilotepec.
 
-### El cartel del **1er Festival de las Juventudes de Jilotepec**, cobrando vida en la web.
+**Sitio:** <https://juveland.vercel.app>
 
-Landing de una sola página para el festival que organiza **IMJUVE Jilotepec**.
-Música en vivo, Territorio Emprende, y el Croquetón de *Trueque con Huella*.
+Astro · Tailwind CSS v4 · GSAP · TypeScript · Vercel
 
-**📅 Sábado 29 de agosto de 2026 · 🕑 2:00 PM · 📍 Alameda de Jilotepec**
+<!-- Agrega aquí una captura o GIF del hero en móvil: ![Juveland en móvil](docs/preview.png) -->
 
-<br />
+## El reto
 
-![Astro](https://img.shields.io/badge/Astro-7-BC52EE?logo=astro&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?logo=tailwindcss&logoColor=white)
-![GSAP](https://img.shields.io/badge/GSAP-3-88CE02?logo=greensock&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![Deploy](https://img.shields.io/badge/Vercel-deployed-000000?logo=vercel&logoColor=white)
-![pnpm](https://img.shields.io/badge/pnpm-11-F69220?logo=pnpm&logoColor=white)
+El festival ya tenía un cartel oficial con una identidad muy marcada: letras tipo burbuja con contorno negro, colores planos y saturados, mascotas y nubes. La idea era que el sitio se sintiera como ese cartel en movimiento y no como una landing genérica.
 
-</div>
+La restricción principal era otra: casi todo el tráfico iba a llegar por un link compartido en WhatsApp, abierto en celulares de gama media y con datos móviles. Por eso cada decisión visual tenía que justificar lo que pesaba.
 
----
+## Qué construí
 
-## ✨ Qué es
+Una sola página con la información del evento: line-up de 9 bandas, cuenta regresiva, la campaña *Trueque con Huella*, mapa, los emprendimientos participantes y el registro para Territorio Emprende.
 
-Juveland **no nace de cero visualmente**. Existe un cartel oficial de IMJUVE con una
-identidad muy marcada — tipografía cómic tipo burbuja con contorno negro grueso,
-colores planos saturados, mascotas redondas, nubes y garabatos sobre fondo crema.
-El objetivo de este sitio es que se sienta como **"el cartel cobrando vida"**, no como
-una landing genérica de SaaS.
+Algunas decisiones que vale la pena mencionar:
 
-Es una landing **de una sola página**, contenido casi 100% estático, **mobile-first**
-porque el grueso del tráfico llega por un link de WhatsApp en un teléfono de gama
-media. Ese dato manda sobre cualquier ambición visual: **nada de esto vale si tarda
-en cargar.**
+- **GSAP solo se carga cuando hace falta.** Ningún componente lo importa de forma estática. Cada sección espera a que termine el loader, observa su entrada al viewport con `IntersectionObserver` y apenas entonces hace `import()` de GSAP y ScrollTrigger. Si el JS falla o tarda, el contenido igual se lee. Esa lógica vive en un solo lugar: [`src/scripts/reveal.ts`](src/scripts/reveal.ts).
+- **La navbar se encoge con CSS**, usando `animation-timeline: scroll()`. No tenía sentido cargar ~110 KB de JS para eso.
+- **La cuenta regresiva no depende de la zona horaria del visitante** (hora fija en `-06:00`). Al llegar a cero muestra qué banda está tocando en ese momento y, cuando termina el evento, cambia a un mensaje de agradecimiento, así que el sitio sigue teniendo sentido después del festival.
+- **Movimiento reducido y accesibilidad.** Todas las animaciones respetan `prefers-reduced-motion`. El menú móvil y el panel de información son diálogos con focus trap, se cierran con Escape y con el botón "atrás" del navegador.
+- **El sistema visual está en tokens.** La paleta salió del cartel oficial, muestreada pixel por pixel. Colores, radios, espaciado y utilidades como `sticker-shadow` o `ink-outline` viven en el `@theme` de [`global.css`](src/styles/global.css), sin `tailwind.config.js`.
+- **Las fuentes se sirven desde el propio sitio** (Fredoka, Baloo 2 y Nunito) con la API de fuentes de Astro, sin pedirle nada a Google Fonts en cada visita.
+- **Una sola fuente de datos.** El line-up, las redes y la navegación se definen una vez en `src/data/` y se reutilizan en cada sección que los muestra.
+- **Preview correcto en WhatsApp**: Open Graph y Twitter Card con URLs absolutas, canonical y sitemap.
 
----
-
-## 🎨 Sistema de diseño — *"sticker, no glass"*
-
-La profundidad viene del **contorno negro grueso**, nunca de blur ni degradados
-suaves. Sombra permitida: tipo troquelado, offset sólido sin blur ni transparencia.
-
-> **Prohibido:** glassmorphism, blur de fondo, degradados pastel, sombras difusas
-> tipo Material, serif o sans corporativa en titulares, ilustración de stock que no
-> sean las mascotas reales del cartel.
-
-### Paleta — plana, saturada, con contorno
-
-Sampleada pixel a pixel del cartel oficial (aún no hay manual de marca).
-
-| Token | Hex | Uso |
-| :-- | :-- | :-- |
-| `red` | `#E32117` | Wordmark JUVELAND, CTA primario, franja de tarjeta |
-| `blue` | `#1BAAE2` | Fondo de sección (alterna con crema), franja de tarjeta |
-| `purple` | `#8E1884` | Ribbons/banners, franja de tarjeta |
-| `lime` | `#E4FC48` | Tags de energía ("SÁB 29"), subrayados, hover — dosis pequeña |
-| `orange` | `#FAAA1E` | Nubes, CTA secundaria |
-| `green` | `#82BE32` | Logo IMJUVE — uso mínimo: confirmaciones, Territorio Emprende |
-| `cream` | `#FAF9F7` | Fondo neutro — **nunca blanco puro** |
-| `ink` | `#14110F` | Texto y contornos — casi negro, no negro puro |
-
-`red` · `blue` · `purple` son las tintas de sección de peso completo: alternan con
-`cream`, nunca más de dos saturadas tocándose en un mismo viewport.
-
-### Tipografía
-
-| Rol | Familia | Uso |
-| :-- | :-- | :-- |
-| **Display** | Fredoka (600–700) | "JUVELAND" del hero, títulos de sección — con contorno `ink` |
-| **Headline** | Baloo 2 (600–800) | Subtítulos, botones, tags, nombres de banda |
-| **Body** | Nunito (400–800) | Párrafos, formulario, footer |
-
-Autohospedadas vía `astro:assets` fonts — cero request a Google Fonts en runtime.
-
-**Tokens, radios (`chip` 999px · `card` 20px · `button` 16px), spacing y utilidades
-(`sticker-shadow`, `ink-outline` y sus variantes `-invert` / `cream-` para bandas
-`bg-ink`) viven en [`src/styles/global.css`](src/styles/global.css)** — Tailwind v4
-CSS-first, no hay `tailwind.config.js`.
-
----
-
-## 🧩 Anatomía de la página
-
-Una sección = un componente, cada una con su **isla de animación aislada**.
-
-| # | Sección | Detalle |
-| :-: | :-- | :-- |
-| — | **Loader** | Overlay crema con crossfade + escala entre el logo IMJUVE y el de Pueblo Mágico. CSS puro; se acorta en visitas repetidas (`localStorage`) |
-| 1 | **Navbar** | Píldora crema sticky que se encoge al hacer scroll con `animation-timeline: scroll()` — CSS puro, sin GSAP |
-| 2 | **Hero** | Wordmark en HTML con `-webkit-text-stroke`, mascotas SVG, nubes con parallax, insignia + tarjeta de fecha en las esquinas. Las letras se "estampan" una por una |
-| 3 | **Chips** | 5 círculos: Arte · Música · Emprendimiento · Expresión · Convivencia |
-| 4 | **¿Por qué venir?** | Tarjeta con razones cortas y checkmarks estilo sticker, revelados en cascada |
-| 5 | **Trueque con Huella — Croquetón** | Banda `bg-green` completa, tono cálido y comunitario. Resumen + `InfoSheet` con el copy oficial de IMJUVE verbatim. Botón de compartir con Web Share API + fallback WhatsApp |
-| 6 | **Agenda** | Cuenta regresiva **en vivo** al 29-ago 14:00 (−06:00 fijo). Al llegar a 0 pasa a "En vivo" con la banda en turno, luego a "¡Gracias por venir!". Tiras tipo boleto con los 9 horarios |
-| 7 | **Bandas** | 9 tarjetas verticales (foto + hora + nombre), tinta plana rotando |
-| 8 | **Síguenos** | Cuentas oficiales de IMJUVE / Turismo Jilotepec / Pueblo Mágico |
-| 9 | **Mapa** | Google Maps embebido (`output=embed`, sin API key) en tarjeta sticker |
-| 10 | **Emprendedores** | Muro de logos de los 13 emprendimientos confirmados de Territorio Emprende |
-| 11 | **Territorio Emprende** | Registro por WhatsApp hasta que IMJUVE confirme un Google Form |
-| 12 | **Footer** | Banda `bg-ink` a columnas, fila de logos oficiales, redes, guiño de mascota |
-
----
-
-## ⚡ Rendimiento — GSAP 100% diferido
-
-Ningún componente importa `gsap` de forma estática.
-
-- **Hero** lo carga con `import()` dinámico, detrás de *fonts cargadas + loader ido*.
-- **Toda sección bajo el pliegue** lo carga a través de
-  [`src/scripts/reveal.ts`](src/scripts/reveal.ts) cuando se acerca al viewport:
-  `whenLoaderGone()` → `IntersectionObserver` (rootMargin 200px) → `import()` de
-  GSAP + ScrollTrigger → `matchMedia(reduceMotion / motionOk)`.
-- **Navbar y Loader** son CSS puro — no valía ~113 KB de JS para encoger una barra.
-- Todo respeta `prefers-reduced-motion` (cae a fades simples) y **el contenido se
-  lee aunque el JS falle o tarde**.
-
----
-
-## 🗂️ Estructura
+## Estructura
 
 ```
 src/
-├─ pages/
-│  ├─ index.astro          · la landing
-│  └─ style-guide.astro    · referencia interna (noindex, fuera del sitemap)
-├─ layouts/
-│  └─ Layout.astro         · <head>, SEO/OG/Twitter, fonts, Analytics, Loader
-├─ components/             · una sección por archivo + piezas compartidas
-│  ├─ Navbar · Hero · Chips · WhyAttend · Trueque · Agenda
-│  ├─ Bandas · Social · Mapa · Emprendedores · Formulario · Footer
-│  └─ Loader · InfoSheet · Cloud · ArcDivider · ChipIcon · SocialIcon
-├─ data/                   · fuente única para lo que se renderiza 2+ veces
-│  ├─ lineup.ts            · 9 bandas — compartido por Agenda + Bandas
-│  ├─ emprendedores.ts     · 13 logos de Territorio Emprende
-│  ├─ social.ts            · cuentas oficiales — Social + Footer
-│  └─ nav.ts               · links de navegación — Navbar + Footer
-├─ scripts/                · helpers de cliente compartidos
-│  ├─ loader.ts            · whenLoaderGone() — la señal que todo espera
-│  ├─ reveal.ts            · pipeline loader→IO→import(GSAP)→matchMedia
-│  └─ focusTrap.ts         · createFocusTrap() para los overlays modales
-├─ styles/
-│  └─ global.css           · Tailwind v4 @theme (tokens) + @utility
-└─ assets/                 · imágenes procesadas con astro:assets (webp)
+├─ pages/        index.astro (la landing) y style-guide.astro (referencia interna, noindex)
+├─ layouts/      <head>, SEO, fuentes, analytics
+├─ components/   una sección por archivo, más piezas compartidas
+├─ data/         line-up, emprendedores, redes y navegación
+├─ scripts/      loader, revelado por scroll, focus trap
+└─ styles/       tokens de Tailwind v4 y utilidades
 ```
 
-**Documentación del repo:** [`AGENTS.md`](AGENTS.md) (symlink: `CLAUDE.md`) tiene la
-guía de arquitectura completa para agentes. `DESIGN.md` (sistema visual) y `PLAN.md`
-(plan de build en 2 pasadas) son documentos de planificación locales, no versionados.
+## Correr en local
 
----
+Requiere Node 22.12 o superior y pnpm 11.
 
-## 🚀 Puesta en marcha
+```sh
+pnpm install
+pnpm dev           # http://localhost:4321
+pnpm build         # genera ./dist
+pnpm astro check   # type-check
+```
 
-**Requisitos:** Node `>= 22.12` · pnpm `11` (`corepack enable`)
+## Créditos
 
-| Comando | Acción |
-| :-- | :-- |
-| `pnpm install` | Instala dependencias |
-| `pnpm dev` | Servidor de desarrollo en `localhost:4321` |
-| `pnpm build` | Build de producción a `./dist/` |
-| `pnpm preview` | Sirve el build de producción en local |
-| `pnpm astro check` | Type-check de los archivos `.astro` |
-
-> `astro dev --background` corre el server en segundo plano; contrólalo con
-> `astro dev stop` / `status` / `logs`. No hay suite de tests configurada.
-
-**Deploy:** Vercel — <https://juveland.vercel.app>. El dominio vive en
-[`astro.config.mjs`](astro.config.mjs) (`site`); de ahí dependen el `<link
-rel=canonical>`, las URLs absolutas de Open Graph/Twitter y el sitemap.
-
----
-
-## 🎸 Line-up
-
-| Hora | Artista | · | Hora | Artista |
-| :-- | :-- | :-: | :-- | :-- |
-| 14:00 | Valentino | | 18:00 | La Frecuenxia |
-| 15:00 | The Rocktor Band | | 19:00 | Rapsodia |
-| 16:00 | Marty BD | | 20:00 | Dopamina |
-| 17:00 | Los Corvett Latin Ska | | 21:00 | Horus |
-| | | | 22:00 | The Sinners |
-
----
-
-## 📋 Pendiente de IMJUVE
-
-Lo ya construido no se rompe sin esto — se integra en cuanto llegue.
-
-**Bloqueantes:**
-- 🔴 Link del Google Form de registro de Territorio Emprende (hoy el registro es por WhatsApp)
-- 🔴 Aviso de privacidad oficial aprobado por su área legal (hay datos de posibles menores de edad)
-
-**No bloqueantes:** fotos reales de las 9 bandas · logos oficiales en alta
-resolución / vector (IMJUVE, Pueblo Mágico, Ayuntamiento) · mascota morada y "la
-bocina" del cartel · dominio final · cartel oficial en alta resolución para la
-imagen OG · requisitos/costo/cupo de Territorio Emprende si aplican.
-
----
-
-<div align="center">
-
-Hecho con cariño para la primera edición de **JUVELAND**.
-*Queremos que el primer JUVELAND no solamente se disfrute — queremos que también deje huella.* 🐾
-
-</div>
+Diseño y desarrollo: yo, para IMJUVE Jilotepec. El cartel, las mascotas, los logotipos institucionales y las imágenes de bandas y emprendimientos pertenecen a IMJUVE Jilotepec y a sus respectivos dueños. Se publican aquí con autorización de IMJUVE, como parte de mi portafolio.

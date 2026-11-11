@@ -1,27 +1,10 @@
 ---
-// Sheet de información — reusable: botón disparador + bottom sheet en móvil /
-// modal centrado en desktop, mismo patrón que el menú móvil de Navbar.astro
-// (`#nav-sheet`: backdrop `bg-ink/40`, `ink-outline-thick sticker-shadow
-// rounded-card`) para no inventar un segundo lenguaje de overlay en el sitio.
+// Botón + bottom sheet en móvil / modal centrado en desktop. Los ids internos
+// se derivan de `id`, así que debe ser único por instancia.
 //
-// Pensado para "resumen en la sección + copy completo adentro" (Trueque con
-// Huella es el primer caso: el texto oficial de IMJUVE va completo aquí,
-// verbatim, mientras la sección solo muestra un resumen breve).
-//
-// `id` debe ser único por instancia — los ids internos se derivan de él, así
-// que dos <InfoSheet> en la misma página no chocan. El script es ahora un
-// <script> procesado (bundleado, no `is:inline`): lee el `id` de cada
-// instancia desde `data-info-sheet` en el botón e itera sobre todas, así puede
-// importar el helper compartido de trampa de foco (src/scripts/focusTrap.ts).
-//
-// OJO al usar `max-w-{sm,md,lg,xl}` en este proyecto: global.css define
-// tokens `--spacing-xs/sm/md/lg/xl` propios (DESIGN.md, para gap/padding),
-// y Tailwind v4 resuelve las utilidades de tamaño con nombre (max-w-lg, etc.)
-// contra esa MISMA escala de spacing si no hay una escala de ancho dedicada
-// — así que `max-w-lg` aquí da 48px (el spacing "lg"), no los 32rem que da
-// Tailwind por default. Por eso el modal usa `max-w-[32rem]` en vez de
-// `max-w-lg`. `max-w-2xl` sigue siendo el de Tailwind (672px) porque el
-// proyecto no define un `--spacing-2xl` que lo choque.
+// Ojo: el proyecto define `--spacing-xs…xl`, y Tailwind v4 resuelve
+// `max-w-lg` contra esa escala (48px), no contra la de anchos (32rem). Por
+// eso aquí va `max-w-[32rem]`.
 interface Props {
 	id: string;
 	title: string;
@@ -85,11 +68,9 @@ const { id, title, triggerLabel, triggerClass = '' } = Astro.props;
 		const closeBtn = document.getElementById(`${id}-close`);
 		const trap = sheet ? createFocusTrap(sheet) : null;
 
-		// El botón "atrás" del teléfono cierra el diálogo en vez de salir de la
-		// página: como es una SPA de una sola URL, sin esto el back sale del
-		// sitio con el diálogo abierto. Al abrir se mete una entrada de
-		// historial y se escucha `popstate`; al cerrar por acción del usuario se
-		// deshace esa entrada con `history.back()`.
+		// El botón "atrás" del teléfono cierra el diálogo en vez de salir del
+		// sitio: al abrir se agrega una entrada al historial, y al cerrar
+		// manualmente se quita con `history.back()`.
 		const onPopState = () => closeSheet({ fromPopState: true });
 
 		const openSheet = () => {

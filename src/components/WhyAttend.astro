@@ -1,15 +1,4 @@
 ---
-// Por qué venir — PLAN.md Pasada 1, paso 5 / DESIGN.md §6.
-// Tarjeta con razones cortas y checkmarks estilo sticker (lime/green) en vez
-// del check amarillo de Alldae. Contenido ya disponible del mensaje de
-// convocatoria — nada pendiente de IMJUVE aquí.
-//
-// Pasada 2 (DESIGN.md §7 — "revela sus puntos en cascada, como los pasos de
-// Socials Analytics, cada punto entra con su check al mismo tiempo, no todos
-// de golpe"): la referencia original hablaba de un numeral 01→02→03 junto a
-// cada check, pero no gustó verlo — se probó y se quitó, se queda solo el
-// check. La cascada (el comportamiento que sí importaba del patrón) vive en
-// el <script> al final.
 const reasons = [
 	{ text: 'Música en vivo todo el día, con bandas y artistas locales.', check: 'bg-lime' },
 	{ text: 'Territorio Emprende: muestra o vende tu proyecto frente a todo Jilotepec.', check: 'bg-green' },
@@ -52,15 +41,7 @@ const reasons = [
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — "Por qué venir" en cascada, como los pasos de Socials
-	// Analytics: cada punto (check + texto) entra como un bloque, pero los
-	// puntos entre sí van uno detrás de otro con un stagger más largo que en
-	// Chips (ahí eran 5 círculos entrando casi juntos; aquí son pasos que se
-	// quieren leer en secuencia). El check, además, se "tica" con un pop propio
-	// superpuesto al mismo instante en que aparece su punto.
-	//
-	// Andamiaje compartido (Loader, IntersectionObserver, import() diferido de
-	// GSAP, matchMedia) en src/scripts/reveal.ts.
+	// Stagger más largo que en Chips: aquí los puntos se leen en secuencia.
 	import { onSectionReveal } from '../scripts/reveal';
 
 	onSectionReveal('#por-que-venir', ({ gsap, section, reduceMotion }) => {

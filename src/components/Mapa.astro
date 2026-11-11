@@ -1,14 +1,6 @@
 ---
-// Mapa — PLAN.md Pasada 1, paso 10 / DESIGN.md §6.
-// Google Maps embebido sin API key (truco `output=embed` con una consulta de
-// texto, no coordenadas inventadas) — PLAN.md permite "coordenadas
-// aproximadas... si el link oficial de IMJUVE no ha llegado", y buscar por
-// nombre del lugar es más honesto que adivinar un lat/lng exacto.
-//
-// El "pin personalizado con mascota/bandera" de DESIGN.md §6 no es viable
-// con el embed gratuito (requiere la API de pago con marcadores JS) — en su
-// lugar, un badge 📍 decorativo junto al título cubre la misma idea sin
-// prometer una integración que no existe.
+// Embed de Google Maps sin API key (`output=embed` con búsqueda por nombre
+// del lugar). El embed gratuito no permite pines personalizados.
 const query = 'Alameda Municipal, Jilotepec, Estado de México';
 const encodedQuery = encodeURIComponent(query);
 ---

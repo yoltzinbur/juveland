@@ -1,22 +1,6 @@
 ---
-// Chips de intro — PLAN.md Pasada 1, paso 4 / DESIGN.md §6.
-// 5 círculos (Arte, Música, Emprendimiento, Expresión, Convivencia), cada uno
-// con tinta de acento distinta y contorno ink, ícono + label debajo (patrón
-// Alldae/Qwero confirmado en DESIGN.md).
-//
-// `flex-wrap` en vez del scroll-snap horizontal que tenía antes (PLAN.md
-// sugería scroll-snap en móvil, pero no gustó el resultado): las tarjetas que
-// no caben en la fila bajan a una segunda fila, centradas, sin scroll ni
-// necesidad de puntos de corte a medida — se acomoda solo según el ancho
-// real disponible en cualquier tamaño de pantalla.
-//
-// bg/stroke se listan como literales completos a propósito (mismo criterio
-// que style-guide.astro): el escáner estático de Tailwind solo detecta clases
-// que aparecen como texto completo en el archivo, no las armadas por
-// interpolación de una variable arbitraria.
-// El fade+rise al entrar en viewport (stagger ~0.06s, DESIGN.md §7) es
-// Pasada 2 — vive en el <script> al final del archivo, aislado como isla de
-// Astro propia de esta sección.
+// Las clases bg/stroke van completas porque Tailwind solo detecta clases
+// escritas literalmente, no las armadas por interpolación.
 import ChipIcon from './ChipIcon.astro';
 
 const chips = [
@@ -51,15 +35,6 @@ const chips = [
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — "Chips... fade+rise por sección, stagger ~0.06s"
-	// (DESIGN.md §7). El encabezado entra primero como bloque; cada círculo se
-	// "estampa" con un ligero overshoot (back.out) para que se sienta como una
-	// tarjeta sticker aterrizando, no solo un fade plano.
-	//
-	// Todo el andamiaje (esperar al Loader, IntersectionObserver + rootMargin,
-	// import() diferido de GSAP, `matchMedia` con reduceMotion/motionOk) vive
-	// una sola vez en src/scripts/reveal.ts — antes estaba copiado en las 5
-	// secciones animadas.
 	import { onSectionReveal } from '../scripts/reveal';
 
 	onSectionReveal('#chips', ({ gsap, section, reduceMotion }) => {

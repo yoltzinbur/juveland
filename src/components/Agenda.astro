@@ -1,28 +1,12 @@
 ---
-// Cuenta regresiva + agenda rápida — PLAN.md Pasada 1, paso 7 / DESIGN.md §6.
-// La agenda oficial ya llegó (line-up de IMJUVE, 9 bandas/horarios) — ya no
-// hace falta el placeholder "Horario por confirmar" que preveía PLAN.md.
-// Datos y colores en src/data/lineup.ts — compartidos con Bandas.astro (paso
-// 8) para que cada banda se vea con la misma tinta en las dos secciones.
-//
-// El countdown es en vivo (PLAN.md permite "estático... o con ella si es
-// rápido") — un solo setInterval de 1s. Hora objetivo fija en -06:00 (Zona
-// Centro de México, sin horario de verano desde 2022) para no depender de la
-// zona horaria del visitante. Al llegar a 0 la tarjeta no se congela en
-// ceros: pasa a un estado "En vivo" (con la banda que toca en ese momento,
-// de src/data/lineup.ts) y, pasada la medianoche, a "¡Gracias por venir!".
-//
-// Pasada 2 (DESIGN.md §7 — "tick/flip simple en los números" + fade+rise
-// general para el resto de la sección) vive en el <script> al final.
+// La hora del evento va fija en -06:00 (centro de México, sin horario de
+// verano desde 2022) para no depender de la zona horaria del visitante.
 import { lineup } from '../data/lineup';
 ---
 
-{/* `overflow-x-clip`: las tiras de la agenda entran con `x: ±60` vía
-     gsap.from, que se pinta en immediateRender apenas carga la página (mucho
-     antes de que el ScrollTrigger dispare), así que asoman fuera del borde
-     derecho y aparece scroll horizontal en móvil hasta que la animación
-     corre. `clip` lo contiene sin crear contenedor de scroll ni tocar el eje
-     vertical. */}
+{/* `overflow-x-clip`: el estado inicial de gsap.from (x: ±60) se pinta al
+     cargar, antes de que dispare el ScrollTrigger, y causaría scroll
+     horizontal en móvil. */}
 <section id="agenda" class="overflow-x-clip px-sm py-xl">
 	<div class="mx-auto flex max-w-2xl flex-col items-center gap-md lg:max-w-3xl">
 		<div class="agenda-heading flex flex-col items-center gap-2 text-center">
@@ -94,19 +78,8 @@ import { lineup } from '../data/lineup';
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — fade+rise general para la sección (encabezado,
-	// tarjeta del countdown, subtítulo, tiras de la agenda) + "tick/flip
-	// simple" en los dígitos del countdown (DESIGN.md §7).
-	//
-	// Andamiaje compartido en src/scripts/reveal.ts: `whenSectionVisible`
-	// espera a que el Loader se retire y a que la sección se acerque al
-	// viewport; `loadScrollGsap` hace el import() diferido de GSAP +
-	// ScrollTrigger (sin modulepreload en la carga inicial). El countdown en
-	// vivo también arranca aquí dentro — la tarjeta está bajo el pliegue, así
-	// que empezar a tickear recién cuando se acerca es invisible para el
-	// usuario y evita un setInterval corriendo desde el segundo 0 sobre algo
-	// que nadie ve. Además, se pausa cuando la tarjeta sale del viewport o la
-	// pestaña queda en segundo plano.
+	// El countdown también arranca hasta que la sección se acerca al viewport:
+	// está bajo el pliegue y no tiene caso tickear algo que nadie ve.
 	import { whenSectionVisible, loadScrollGsap } from '../scripts/reveal';
 
 	whenSectionVisible('#agenda').then(async (section) => {
@@ -119,7 +92,6 @@ import { lineup } from '../data/lineup';
 		const subheading = section.querySelector<HTMLElement>('.agenda-subheading');
 		const agendaItems = Array.from(section.querySelectorAll<HTMLElement>('.agenda-item'));
 
-		// Dos condiciones mutuamente excluyentes que cubren el 100% de los casos.
 		gsap.matchMedia().add(
 			{
 				reduceMotion: '(prefers-reduced-motion: reduce)',
@@ -146,8 +118,6 @@ import { lineup } from '../data/lineup';
 				}
 
 				if (countdownCard) {
-					// Un poco de pop (back.out) en vez de un fade plano — es la pieza
-					// central de la sección, el "tag" con la cuenta regresiva.
 					tl.from(
 						countdownCard,
 						{
@@ -171,10 +141,7 @@ import { lineup } from '../data/lineup';
 				}
 
 				if (agendaItems.length) {
-					// Intercaladas izquierda/derecha (índice par entra desde la
-					// izquierda, impar desde la derecha) en vez del fade+rise vertical
-					// que usan el resto de las secciones — les da su propio ritmo, como
-					// tiras de boleto repartiéndose de un mazo.
+					// Pares desde la izquierda, impares desde la derecha.
 					tl.from(
 						agendaItems,
 						{
@@ -191,13 +158,10 @@ import { lineup } from '../data/lineup';
 			},
 		);
 
-		// --- Fase: upcoming (cuenta regresiva) / live ("En vivo") / ended
-		//     ("¡Gracias por venir!") — DESIGN.md §6. Todas se calculan contra
-		//     la hora objetivo fija en -06:00, no la zona del visitante.
+		// Fases: upcoming (cuenta regresiva) → live → ended.
 		const wrapper = document.getElementById('countdown-numbers');
 		const target = new Date(wrapper?.dataset.target ?? '');
-		// El line-up corre 14:00–22:00 (The Sinners cierra). Se mantiene "En
-		// vivo" hasta la medianoche y de ahí en adelante pasa a "Gracias".
+		// El line-up termina a las 22:00; "En vivo" se mantiene hasta medianoche.
 		const endOfEvent = target.getTime() + 10 * 60 * 60 * 1000;
 
 		type Slot = { t: string; n: string };
@@ -213,9 +177,8 @@ import { lineup } from '../data/lineup';
 		const phaseOf = (now: number): 'upcoming' | 'live' | 'ended' =>
 			now < target.getTime() ? 'upcoming' : now < endOfEvent ? 'live' : 'ended';
 
-		// Banda en el escenario ahora: último horario del line-up que ya pasó.
-		// Aritmética pura sobre `target` (= primer horario) para no depender
-		// de la zona horaria del visitante.
+		// Último horario que ya pasó. Se calcula relativo a `target` (el primer
+		// horario) para no depender de la zona horaria del visitante.
 		const currentAct = (now: number): string => {
 			const first = schedule[0];
 			if (!first) return '';
@@ -302,7 +265,6 @@ import { lineup } from '../data/lineup';
 			return;
 		}
 
-		// --- phase === 'upcoming': cuenta regresiva en vivo con tick/flip --
 		const days = wrapper?.querySelector<HTMLElement>('[data-unit="days"]');
 		const hours = wrapper?.querySelector<HTMLElement>('[data-unit="hours"]');
 		const minutes = wrapper?.querySelector<HTMLElement>('[data-unit="minutes"]');
@@ -311,16 +273,11 @@ import { lineup } from '../data/lineup';
 		const digitEls = [days, hours, minutes, seconds].filter((el): el is HTMLElement => Boolean(el));
 		gsap.set(digitEls, { transformPerspective: 300 });
 
-		// El primer render (de "00" al valor real) no lleva flip: si no,
-		// compite con el fade+rise de entrada de arriba, que corre justo
-		// cuando esta tarjeta recién se vuelve visible por primera vez.
+		// Sin flip en el primer render para no competir con la animación de entrada.
 		let isFirstTick = true;
 
-		// "Tick/flip simple" (DESIGN.md §7): un solo elemento gira en X hasta
-		// quedar de canto (invisible un instante), ahí se cambia el texto, y
-		// termina de girar del otro lado — dos giros cortos, no un flip-clock
-		// de dos paneles, pero da la misma sensación de "voltear" sin duplicar
-		// el DOM de cada dígito.
+		// Flip con un solo elemento: gira hasta quedar de canto, cambia el texto
+		// y termina de girar. Evita duplicar el DOM de cada dígito.
 		const setDigit = (el: HTMLElement | null | undefined, value: string) => {
 			if (!el || el.textContent === value) return;
 
@@ -360,9 +317,8 @@ import { lineup } from '../data/lineup';
 			isFirstTick = false;
 		};
 
-		// Pausa/reanuda el intervalo de 1s: no tiene sentido tickear (y menos
-		// disparar flips con GSAP) mientras la tarjeta está fuera de pantalla o
-		// la pestaña está en segundo plano.
+		// Pausa el intervalo cuando la tarjeta sale de pantalla o la pestaña
+		// queda en segundo plano.
 		let inView = true;
 
 		function stopCountdown() {

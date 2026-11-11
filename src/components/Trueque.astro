@@ -1,34 +1,12 @@
 ---
-// Trueque con Huella — Croquetón — PLAN.md Pasada 1, paso 6 / DESIGN.md §6.
-// Tono deliberadamente distinto al resto ("hacer el bien", no "consumir
-// contenido del festival"): banda `bg-green` de página completa (DESIGN.md
-// §3: "lime/orange/green pueden vestir una sección de peso completo
-// ocasionalmente"), cerrada abajo con ArcDivider y con un borde `ink` arriba
-// (border-t) — el mismo contorno grueso del resto del sitio, para que el
-// corte con la sección de cream de encima no quede sin línea. Motivo pata 🐾
-// en vez de una mascota (mascota morada/"la bocina" siguen sin asset real,
-// DESIGN.md §9 — no se inventa un marcador en su lugar).
+// La sección muestra un resumen; el texto oficial de IMJUVE va completo y sin
+// cambios dentro del InfoSheet.
 //
-// La sección solo muestra un resumen breve (demasiado texto corrido no
-// encaja en una landing mobile-first) + botón "Más información" que abre un
-// InfoSheet con el copy oficial de IMJUVE completo, verbatim — así se sigue
-// cumpliendo PLAN.md paso 6 ("usar el copy oficial tal cual, no reescribir
-// ni resumir de más") porque el texto íntegro sigue existiendo sin alterar,
-// solo cambia dónde vive: el resumen visible es redacción nueva y corta, no
-// una versión editada del oficial.
+// El `bg-green` va en un div interior y no en el <section>: si no, también
+// pintaría detrás del arco y el corte cóncavo dejaría de verse.
 //
-// El `bg-green` va en un div interior, NO en el <section>: si el color vive
-// en el <section> pinta toda su caja incluido el área detrás de ArcDivider,
-// y el recorte cóncavo del SVG (transparente donde la curva "muerde") solo
-// revela lo que hay detrás de él — si detrás sigue siendo verde, la curva
-// desaparece visualmente y se ve como un rectángulo. El <section> se queda
-// sin fondo (hereda el cream de <body>) para que ese recorte sí muestre cream.
-//
-// El botón de compartir usa Web Share API cuando está disponible (cubre
-// WhatsApp/redes nativas en móvil, el canal principal de tráfico del sitio);
-// el link de WhatsApp de al lado es el fallback funcional sin JS. Ninguno de
-// los dos inventa un dominio: comparten solo el texto hasta que el script
-// completa la URL real con window.location en tiempo de carga.
+// Compartir usa la Web Share API cuando existe; el link de WhatsApp funciona
+// como alternativa, incluso sin JS.
 import ArcDivider from './ArcDivider.astro';
 import InfoSheet from './InfoSheet.astro';
 
@@ -121,8 +99,7 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 	const shareBtn = document.getElementById('trueque-share-btn');
 	const whatsappLink = document.getElementById('trueque-whatsapp');
 
-	// La URL real solo se conoce en el cliente (el sitio aún no tiene dominio
-	// confirmado) — se completa aquí en vez de inventar un dominio en el build.
+	// La URL se toma del navegador para no amarrar el texto a un dominio.
 	const pageUrl = `${window.location.origin}${window.location.pathname}#trueque-con-huella`;
 
 	if (whatsappLink instanceof HTMLAnchorElement) {
@@ -137,13 +114,12 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 			try {
 				await navigator.share({ title: 'JUVELAND — Trueque con Huella', text, url: pageUrl });
 			} catch {
-				// El usuario cerró el share sheet nativo sin elegir nada — no hacer nada.
+				// El usuario cerró el menú de compartir.
 			}
 			return;
 		}
 
-		// Sin Web Share API: copiar texto+link al portapapeles; el botón de
-		// WhatsApp de al lado sigue funcionando como fallback directo.
+		// Sin Web Share API: se copia al portapapeles.
 		try {
 			await navigator.clipboard.writeText(`${text} ${pageUrl}`);
 			shareBtn.textContent = '¡Copiado! Pégalo donde quieras';
@@ -151,7 +127,7 @@ const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 				shareBtn.textContent = 'Comparte esta invitación';
 			}, 2500);
 		} catch {
-			// Portapapeles tampoco disponible — el link de WhatsApp basta.
+			// Tampoco hay portapapeles: queda el link de WhatsApp.
 		}
 	});
 </script>

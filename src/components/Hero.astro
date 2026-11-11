@@ -1,18 +1,7 @@
 ---
-// Hero — PLAN.md Pasada 1, paso 2 / DESIGN.md §6.
-// Wordmark en HTML (contorno vía -webkit-text-stroke), insignia + stat en
-// las esquinas en desktop y como chips en línea en móvil para no saturar
-// una pantalla chica con overlays absolutos. El movimiento de Pasada 2
-// (letras estampándose, mascotas con idle bounce, nubes con parallax) vive
-// en el <script> al final del archivo — ver DESIGN.md §7.
-//
-// Las 3 <Image> de mascotas llevan `loading="eager"`: el Hero es la primera
-// sección de la página, así que todas están arriba del pliegue desde el
-// primer frame — el `loading="lazy"` por defecto de <Image> les baja
-// prioridad de carga sin necesidad (el audit de Astro lo marca como
-// "unoptimized loading attribute"). Mismo criterio en Loader.astro y
-// Navbar.astro; el guiño de mascota del Footer, en cambio, sí se queda en
-// lazy (por defecto) porque ese sí vive muy abajo del pliegue real.
+// En desktop la insignia y la fecha van en las esquinas; en móvil pasan a
+// chips en línea para no saturar la pantalla con elementos absolutos.
+// Las mascotas usan `loading="eager"` porque están arriba del pliegue.
 import { Image } from 'astro:assets';
 import Cloud from './Cloud.astro';
 import mascotaVerde from '../assets/hero/mascota-verde.png';
@@ -21,14 +10,8 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 
 <section id="inicio" class="relative overflow-hidden px-sm pt-lg pb-xl sm:pt-xl">
 	<Cloud class="hero-cloud pointer-events-none absolute top-6 left-2 w-16 opacity-90 sm:top-8 sm:left-6 sm:w-24 md:w-28 lg:w-32" />
-	{/* Esta nube va visible en TODO ancho angosto (igual que la de la
-	     izquierda, sin gating de `hidden`) y solo se oculta desde 830px, que es
-	     cuando aparece el cluster de insignia/mascota/fecha de la esquina y ya
-	     no hace falta — antes de eso quedaba encimada detrás del círculo de la
-	     insignia. `hero:hidden` es seguro aquí (sin ninguna otra
-	     variante de `display` en la misma clase compitiendo por la cascada).
-	     Tamaños calcados de la nube izquierda (w-16/sm:w-24/md:w-28) para que
-	     no se sienta más chica que su pareja del otro lado. */}
+	{/* Se oculta en el breakpoint `hero` (830px), donde aparece el grupo de la
+	     esquina y quedaría encimada detrás de la insignia. */}
 	<Cloud class="hero-cloud pointer-events-none absolute top-14 right-4 w-16 opacity-80 sm:w-24 md:right-12 md:w-28 hero:hidden" />
 
 	<Image
@@ -67,14 +50,8 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 		</span>
 	</div>
 
-	{/* Mascota mostaza espejo de la verde (abajo-izquierda) pero abajo-derecha
-	     — visible en TODO ancho angosto igual que la verde (sin gating de
-	     `hidden`, mismo criterio que la nube de arriba) y se oculta solo desde
-	     830px, que es cuando el cluster de la esquina toma el relevo. Anclada
-	     abajo del todo, en la misma franja de padding que la verde, para no
-	     chocar con el bloque de texto centrado (que no llega hasta el borde
-	     inferior). Tamaños calcados de la mascota verde (w-14/sm:w-20/md:w-24)
-	     para que coincidan en todo momento con su pareja del otro lado. */}
+	{/* Reflejo de la mascota verde. Desde `hero` la reemplaza la del grupo de
+	     la esquina. */}
 	<Image
 		src={mascotaMostaza}
 		alt=""
@@ -83,22 +60,13 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 		class="hero-mascota pointer-events-none absolute right-2 bottom-4 w-14 opacity-90 sm:right-6 sm:bottom-8 sm:w-20 md:w-24 hero:hidden"
 	/>
 
-	{/* Insignia + mascota + tarjeta de fecha en la esquina — antes aparecía
-	     desde sm: (640px), pero entre 640-830px la mascota mostaza se encimaba
-	     con las letras de JUVELAND (poco espacio horizontal para el texto
-	     centrado + el cluster absoluto a la derecha). 830px es el punto donde
-	     ya no chocan; por debajo, se queda el layout tipo chip (insignia arriba
-	     del título, tarjeta de fecha debajo del CTA) igual que en móvil. */}
+	{/* Grupo de la esquina. Por debajo de 830px se encimaba con el título. */}
 	<div class="absolute top-8 right-sm bottom-sm hidden flex-col items-end justify-between hero:flex">
 		<div class="sticker-shadow rounded-full">
 			<svg viewBox="0 0 120 120" class="h-24 w-24 md:h-28 md:w-28 lg:h-32 lg:w-32" role="img" aria-label="1er Festival, IMJUVE Jilotepec">
 				<circle cx="60" cy="60" r="57" class="fill-cream stroke-ink" stroke-width="2" />
-				{/* Antes el texto envolvía el círculo completo (path cerrado de
-				     360°), así que la mitad de las letras — las de los costados y
-				     abajo — quedaban de lado o boca abajo. Este path solo cubre un
-				     arco de ~160° arriba (de las 10 a las 2, aprox.), así el texto
-				     entero se lee de izquierda a derecha, casi horizontal en todo
-				     momento. */}
+				{/* Arco de ~160° en la parte de arriba, para que ninguna letra quede
+				     de lado o al revés. */}
 				<path id="hero-badge-ring" d="M17,52 A44,44 0 0,1 103,52" fill="none" />
 				<text class="fill-ink font-headline" font-size="8" font-weight="700" letter-spacing="0.3" text-anchor="middle">
 					<textPath href="#hero-badge-ring" startOffset="51%">• 1ER FESTIVAL • JUVELAND •</textPath>
@@ -128,17 +96,9 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — Hero: "mascotas con loop de flotación/rebote, nubes
-	// con parallax suave, letras JUVELAND con SplitText (pop + rotación
-	// overshoot + ease elástico, ~0.05-0.08s entre letra)" — DESIGN.md §7.
-	//
-	// GSAP entra por import() DINÁMICO, no estático: así el chunk no lleva
-	// `<link rel=modulepreload>` compitiendo con fuentes/CSS en la carga
-	// inicial (era, con Navbar, el único consumidor estático de GSAP — ~113KB
-	// en la ruta crítica de un celular mediano, la prioridad #1 del sitio). La
-	// descarga arranca de inmediato (no espera al Loader), pero la animación
-	// del título igual está gateada por `document.fonts.ready` + el Loader, una
-	// ventana (~1.3s) de sobra para que el chunk llegue.
+	// GSAP se importa de forma dinámica para que no compita con fuentes y CSS
+	// en la carga inicial. La descarga empieza de inmediato, pero la animación
+	// espera a las fuentes y al loader, tiempo de sobra para que llegue.
 	import { whenLoaderGone } from '../scripts/loader';
 
 	const section = document.querySelector<HTMLElement>('#inicio');
@@ -152,10 +112,8 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 			([{ gsap }, { ScrollTrigger }, { SplitText }]) => {
 				gsap.registerPlugin(ScrollTrigger, SplitText);
 
-				// Dos condiciones mutuamente excluyentes que cubren el 100% de los
-				// casos (mismo patrón que src/scripts/reveal.ts): con una sola
-				// condición nombrada, matchMedia solo invoca el callback cuando ESA
-				// media query da true.
+				// Dos condiciones complementarias: con una sola, matchMedia no
+				// llamaría al callback cuando esa media query es falsa.
 				gsap.matchMedia().add(
 					{
 						reduceMotion: '(prefers-reduced-motion: reduce)',
@@ -164,21 +122,14 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 					(context) => {
 						const { reduceMotion } = context.conditions as { reduceMotion: boolean };
 
-						// --- JUVELAND: cada letra entra por separado, "estampándose" ---
-						// Dos condiciones antes de dividir y animar:
-						//  1. Fuentes cargadas: si se separa en letras con la fuente de
-						//     reemplazo todavía puesta, el ancho de cada letra cambia al
-						//     llegar Fredoka y el spacing/kerning queda mal.
-						//  2. Loader ya retirado (`whenLoaderGone`): su overlay vive en
-						//     z-[100] tapando el Hero ~1.3s. Si el estampado corre antes,
-						//     pasa entero detrás de ese overlay cream y nadie lo ve.
+						// Antes de dividir el título en letras hay que esperar a que
+						// cargue Fredoka (si no, el espaciado queda mal) y a que el
+						// loader desaparezca (si no, la animación pasa detrás de él).
 						if (title) {
 							Promise.all([document.fonts.ready, whenLoaderGone()]).then(() => {
 								const split = SplitText.create(title, { type: 'chars' });
 
 								if (reduceMotion) {
-									// DESIGN.md §7: con reduced-motion cae a un fade simple, sin
-									// pop/rotación/elastic de por medio.
 									gsap.from(split.chars, { opacity: 0, duration: 0.3, stagger: 0.03 });
 								} else {
 									gsap.from(split.chars, {
@@ -194,15 +145,8 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 							});
 						}
 
-						// --- Mascotas: hop/rebote en loop, con squash-stretch ----------
-					// Primer intento fue un float sutil (±8px, sine) y quedó demasiado
-					// discreto para el tono del festival — esta versión es un salto real
-					// (anticipación aplastada → sube estirándose y se ladea → aterriza)
-					// con más amplitud, que es lo que "rebote" pedía en DESIGN.md §7 y lo
-					// que el usuario pidió más vistoso. Movimiento ambiental (no
-					// informativo), así que con reduced-motion simplemente no se crea —
-					// a diferencia del título o el Navbar, aquí no hay estado/información
-					// que preservar sin el loop.
+					// Mascotas: salto en loop con squash & stretch. Es movimiento
+					// decorativo, así que con reduced-motion no se crea.
 					if (!reduceMotion) {
 						mascotas.forEach((mascota, i) => {
 							gsap.set(mascota, { transformOrigin: '50% 100%' });
@@ -223,15 +167,8 @@ import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 						});
 					}
 
-					// --- Nubes: parallax al hacer scroll el Hero -------------------
-					// Primer intento (±40-60px sobre toda la altura del Hero) resultó
-					// imperceptible: sobre un rango de scroll de varios cientos de px,
-					// ese desplazamiento es una fracción mínima. Se sube el rango y se
-					// suma un leve corrimiento horizontal en direcciones opuestas por
-					// nube (se "separan" un poco al hacer scroll) para que el efecto se
-					// note sin dejar de sentirse suave — `scrub: 0.6` le da un pequeño
-					// rezago en vez de seguir el dedo 1:1, que es lo que más se lee
-					// como parallax.
+					// Nubes: parallax con scroll. `scrub: 0.6` agrega un pequeño
+					// rezago para que no sigan el dedo 1:1.
 					if (!reduceMotion) {
 						clouds.forEach((cloud, i) => {
 							gsap.to(cloud, {

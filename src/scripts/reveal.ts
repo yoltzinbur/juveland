@@ -1,17 +1,9 @@
-// Orquestación compartida de las islas de animación bajo el pliegue.
+// Animaciones de las secciones bajo el pliegue:
+// loader fuera → la sección se acerca al viewport → import() de GSAP →
+// gsap.matchMedia() con reduced-motion.
 //
-// Las 5 secciones animadas (Chips, WhyAttend, Agenda, Bandas, Emprendedores)
-// repetían el mismo andamiaje: esperar a que el Loader se vaya → observar la
-// sección con IntersectionObserver (rootMargin 200px) → import() dinámico de
-// GSAP + ScrollTrigger recién ahí → registrar el plugin → `gsap.matchMedia()`
-// con las dos condiciones (`reduceMotion` / `motionOk`) que cubren el 100% de
-// los casos. Eso vive aquí una sola vez.
-//
-// El chunk de GSAP entra por import() dinámico (no estático): así NO lleva
-// `<link rel=modulepreload>` compitiendo con fuentes/CSS en la carga inicial y
-// solo se descarga cuando una sección se acerca al viewport. El trabajo
-// (registerPlugin, crear timeline+ScrollTrigger, el immediateRender de los
-// .from()) queda diferido junto con la descarga.
+// El import dinámico evita que GSAP se precargue con la página: solo se
+// descarga cuando una sección lo necesita.
 import { whenLoaderGone } from './loader';
 
 type GsapModule = typeof import('gsap');

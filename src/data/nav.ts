@@ -1,7 +1,4 @@
-// Links de navegación — fuente única para Navbar.astro (barra + menú móvil) y
-// Footer.astro (columna "Navegación"), mismo criterio que src/data/lineup.ts y
-// src/data/social.ts: las dos listas estaban definidas idénticas en los dos
-// componentes y podían divergir al tocar solo una.
+// Lo usan Navbar y Footer.
 export interface NavLink {
 	href: string;
 	label: string;

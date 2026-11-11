@@ -1,21 +1,7 @@
-// Line-up oficial de IMJUVE (gráfico "LINE UP" que mandó el usuario) — fuente
-// única para Agenda.astro (paso 7) y Bandas.astro (paso 8), así las dos
-// secciones no pueden desincronizarse si el line-up cambia.
+// Lo usan Agenda y Bandas. Los colores siguen el gráfico oficial del line-up.
 //
-// Colores: mapeados 1:1 contra el gráfico oficial, rotando
-// red/blue/purple/green/lime (PLAN.md paso 7) — el "amarillo" del gráfico se
-// resolvió a `lime`, la 5ª tinta que el propio PLAN.md ya designó para esta
-// rotación, no una tinta nueva inventada.
-//
-// `text`: no es la regla genérica de DESIGN.md §3 ("texto sobre blue va en
-// cream") porque, medido con la fórmula de contraste WCAG, `ink` da mejor
-// contraste sobre `blue`/`green`/`lime` que `cream`.
-//
-// `photo`: fotos reales de cada banda (780×1040, ya en webp) que mandó el
-// usuario — se importan aquí en vez de por string/path para que Astro las
-// procese con `astro:assets` (Bandas.astro las consume con <Image>), que
-// genera el tamaño/formato optimizado real para el slot de la tarjeta en vez
-// de servir el archivo fuente completo.
+// `text`: sobre blue/green/lime se usa `ink` porque da mejor contraste WCAG
+// que `cream`.
 import type { ImageMetadata } from 'astro';
 import valentino from '../assets/bands/valentino-miranda.webp';
 import rocktorBand from '../assets/bands/the-rocktor-band.webp';

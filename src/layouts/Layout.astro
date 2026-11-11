@@ -9,8 +9,7 @@ interface Props {
 	title?: string;
 	description?: string;
 	showLoader?: boolean;
-	/** Añade <meta name="robots" content="noindex"> — para páginas internas
-	 *  como /style-guide, que se publican pero no deben aparecer en buscadores. */
+	/** Para páginas internas como /style-guide. */
 	noindex?: boolean;
 }
 
@@ -21,9 +20,7 @@ const {
 	noindex = false,
 } = Astro.props;
 
-// `Astro.site` (astro.config.mjs) es la base para URLs absolutas — Open Graph
-// y Twitter Card las exigen absolutas, y el canal principal de difusión del
-// sitio (un link por WhatsApp) renderiza su preview a partir de esas etiquetas.
+// Open Graph exige URLs absolutas; de ahí sale el preview del link en WhatsApp.
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const ogImage = new URL('/og.png', Astro.site).href;
 ---
@@ -34,14 +31,8 @@ const ogImage = new URL('/og.png', Astro.site).href;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		{/* El sitio maneja su propio scroll a las secciones (Navbar hace
-		   `scrollIntoView` a mano al elegir un link del menú). Sin esto, los
-		   overlays modales (menú de Navbar, InfoSheet) que se cierran con
-		   `history.back()` disparan la restauración de scroll del navegador y
-		   saltan el viewport a la última sección visitada por #ancla — cerrar un
-		   diálogo no debe mover la página. `manual` desactiva solo ese
-		   restaurado de back/forward; los links `#ancla` normales siguen
-		   desplazándose igual. */}
+		{/* Los diálogos se cierran con `history.back()`; sin esto, el navegador
+		   restauraría el scroll y la página saltaría al cerrar uno. */}
 		<script is:inline>history.scrollRestoration = 'manual';</script>
 
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />

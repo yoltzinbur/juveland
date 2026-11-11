@@ -1,9 +1,6 @@
 ---
-// Íconos de línea para Social.astro — mismo criterio que ChipIcon.astro:
-// trazo simple porque el contorno "ink" grueso ya lo aporta el círculo de
-// fondo. `stroke="currentColor"` en vez de una clase `stroke-*`: el color se
-// hereda de `class` (text-cream/text-ink) que pasa el caller, así no hace
-// falta duplicar la lógica de contraste en dos lugares.
+// Íconos de línea para las redes. Usan `currentColor`, así que el color se
+// hereda de la clase `text-*` de quien los usa.
 interface Props {
 	name: 'instagram' | 'facebook';
 	class?: string;

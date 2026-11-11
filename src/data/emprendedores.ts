@@ -1,16 +1,5 @@
-// Emprendimientos confirmados para Territorio Emprende — fuente única para
-// Emprendedores.astro (muro de logos, antes de la sección de registro).
-//
-// `name` se pinta como caption debajo de cada logo y además es el `alt` de la
-// <Image> (a11y / SEO). Los nombres se transcribieron de los propios logos que
-// mandó IMJUVE (el de "Sinergia 3D" — la "S" suelta — lo pasaron aparte); si
-// más adelante llega una lista oficial, ajustar aquí.
-//
-// `logo`: se importan como módulo (no por string/path) para que Astro los
-// procese con `astro:assets` — <Image> en Emprendedores.astro genera el
-// tamaño/formato real que necesita cada celda de la grilla en vez de servir el
-// archivo fuente completo (varios pasan de 100KB). Mismo criterio que las
-// fotos de banda en src/data/lineup.ts.
+// `name` se muestra debajo del logo y también es su `alt`.
+// Los logos se importan como módulo para que astro:assets los optimice.
 import type { ImageMetadata } from 'astro';
 import antonella from '../assets/emprendedores/antonella.webp';
 import casaPeluditos from '../assets/emprendedores/casa-peluditos.webp';

@@ -1,32 +1,7 @@
 ---
-// Footer — PLAN.md Pasada 1, paso 12 / DESIGN.md §6, último de la Pasada 1.
-// `id="contacto"` — el link "Contacto" del Navbar apuntaba aquí desde el
-// principio y hasta ahora no existía la sección (mismo caso que
-// "territorio-emprende" en Formulario.astro).
-//
-// Banda `bg-ink` de página completa, sin arco (a diferencia de Bandas): un
-// footer es el elemento terminal de la página, no una "isla" rodeada de
-// cream por los dos lados — el corte plano de arriba tampoco necesita un
-// `border-ink` explícito, sería invisible contra su propio fondo `ink`
-// (mismo razonamiento que ya quedó documentado en Bandas.astro).
-//
-// Logos: versión oficial buena de los tres (IMJUVE, Ayuntamiento, Pueblo
-// Mágico) en src/assets/logo/ — ya vienen cuadrados (1254×1254) con el
-// contorno blanco tipo sticker incluido en el propio PNG, así que no hace
-// falta recortar ni añadir `cream-outline` aquí (a diferencia de los otros
-// stickers del sitio, que sí dependen de la clase). Los del Loader.astro
-// (src/assets/hero/simbolo-*.png, versión reconstruida de un wrapper SVG sin
-// vector real, DESIGN.md §9) siguen siendo un asset distinto — no se tocan.
-//
-// Pesan 800KB-950KB como fuente, pero eso no llega al usuario: <Image>
-// las reprocesa en build a los ~112px reales que se muestran aquí (mismo
-// tratamiento que las fotos de banda), así que el peso de origen no es un
-// problema de rendimiento — se recomprimieron sin pérdida (mismos píxeles)
-// solo para no inflar el repo de más.
-//
-// Columna de contacto: sin teléfono/correo oficial de IMJUVE, así que no se
-// inventa uno — se listan las redes reales (src/data/social.ts, compartido
-// con Social.astro) como el canal de contacto honesto que sí tenemos.
+// Los logos oficiales ya traen el contorno blanco tipo sticker en el PNG, así
+// que no llevan `cream-outline`. <Image> los reduce en build al tamaño real
+// en pantalla.
 import { Image } from 'astro:assets';
 import mascotaVerde from '../assets/hero/mascota-verde.png';
 import logoAyuntamiento from '../assets/logo/logo-ayuntamiento.png';

@@ -1,62 +1,17 @@
 ---
-// Bandas — PLAN.md Pasada 1, paso 8 / DESIGN.md §6.
-// Grilla estática — en Pasada 2 se evaluó el carrusel infinito arrastrable
-// (Draggable+InertiaPlugin+loop sin fin, como el demo de referencia de
-// GSAP/ScrollTrigger) contra quedarse con la grilla, y se decidió quedarse:
-// con 9 bandas ya caben todas a la vista sin esconder ninguna detrás de un
-// swipe, pesa menos en celulares medianos (la prioridad #1 del sitio), y no
-// suma la complejidad de accesibilidad de un carrusel arrastrable a dos días
-// del evento. PLAN.md paso 8 ya preveía esta salida ("si se cayó a grilla
-// estática por rendimiento, solo fade+rise") — aquí se usa el abanico
-// (rotación + offset) en vez de un fade+rise plano, para no perder del todo
-// el espíritu "mazo de cartas" que sí tenía el carrusel.
+// Grilla en lugar de carrusel: con 9 bandas caben todas a la vista y pesa
+// menos en celulares de gama media.
 //
-// Banda `bg-ink` de página completa (no otro color de la paleta): las 9
-// tarjetas ya son 5 tintas saturadas compitiendo entre sí, así que envolverlas
-// en, digamos, naranja pasaría de los ~3 acentos de DESIGN.md §3. `ink` no
-// compite — es el mismo neutro de contornos/texto de todo el sitio, y ya es
-// una referencia citada en DESIGN.md §1 (Qwero usa negro como una de sus
-// secciones de color plano) que no se había usado todavía. Efecto extra: las
-// tarjetas de colores resaltan como stickers sobre fondo negro en vez de
-// sumarse a la pelea de color.
-//
-// ArcDivider en los DOS extremos de la banda `bg-ink`: arriba con `rotate-180`
-// (la curva es simétrica izquierda-derecha, así que un giro de 180° la apunta
-// para el otro lado sin necesitar un segundo path) y abajo sin rotar, como lo
-// usa Trueque. Los dos con `fill-ink` para continuar el bloque negro; el trazo
-// `ink` de cada curva sí se ve contra el `cream` de las secciones vecinas
-// (Agenda arriba, Social abajo) y recorta la banda como dos mordidas cóncavas
-// en vez de dos cantos rectos.
-//
-// Tarjetas: `cream-outline`/`sticker-shadow-invert-sm` en vez de
-// `ink-outline`/`sticker-shadow-sm` — el contorno/sombra normal en `ink` se
-// volvería invisible sobre este fondo también `ink` (global.css tiene el
-// porqué completo).
-//
-// Mismos datos y colores que Agenda.astro (src/data/lineup.ts) para que cada
-// banda se vea con la misma tinta en ambas secciones.
-//
-// Fotos reales (src/data/lineup.ts) recortadas a `aspect-square` con
-// `object-cover` — las fuentes son verticales (780×1040, 3:4), así que el
-// recorte centra la imagen y pierde un poco de los bordes superior/inferior;
-// decisión ya tomada de mantener la tarjeta cuadrada (layout ya aprobado) en
-// vez de alargarla a 3:4. `widths`+`sizes` en vez de un solo `width` fijo:
-// el grid pasa de 2 a 3 columnas en `sm`, así que el slot real de la tarjeta
-// cambia de ancho con el viewport — sin esto, Astro serviría un solo tamaño
-// (probablemente sobredimensionado para el slot angosto en móvil), que es
-// justo el problema de peso que se quería evitar.
+// Fondo `ink` porque las tarjetas ya usan cinco tintas saturadas; otro color
+// de la paleta competiría con ellas. Por eso las tarjetas usan las variantes
+// `cream-outline` / `sticker-shadow-invert-sm`.
 import { Image } from 'astro:assets';
 import ArcDivider from './ArcDivider.astro';
 import { lineup } from '../data/lineup';
 ---
 
-{/* `overflow-x-clip`: la animación de entrada de las tarjetas (rotación ±10°
-     + scale 0.8 vía gsap.from, que se pinta en immediateRender apenas carga la
-     página, mucho antes de que el ScrollTrigger dispare) hace que las esquinas
-     giradas se salgan del borde derecho y aparezca scroll horizontal en móvil
-     hasta que la animación termina. `clip` lo contiene sin crear un contenedor
-     de scroll ni afectar el eje vertical (a diferencia de `overflow-hidden`,
-     que rompería `position: sticky` y recortaría el arco). */}
+{/* `overflow-x-clip` y no `overflow-hidden`: contiene las tarjetas rotadas
+     del estado inicial de la animación sin recortar los arcos. */}
 <section id="bandas" class="relative overflow-x-clip">
 	<ArcDivider fillClass="fill-ink" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 
@@ -72,10 +27,8 @@ import { lineup } from '../data/lineup';
 					lineup.map((item, i) => (
 						<div
 							class={`banda-card cream-outline sticker-shadow-invert-sm flex flex-col overflow-hidden rounded-card text-left ${item.bg} ${
-								/* 9 bandas → el grid móvil de 2 col deja la última suelta; que
-								   ocupe las dos columnas pero con el ancho de una sola, centrada
-								   (una col = (100% - gap-sm) / 2 = 50% - 8px). En `sm`+ son 3 col
-								   y cierran 3×3 exactas, así que ahí vuelve a lo normal. */
+								/* En móvil (2 columnas) la novena tarjeta queda sola: se centra
+								   con el ancho de una columna. */
 								i === lineup.length - 1
 									? 'col-span-2 mx-auto w-[calc(50%-var(--spacing-xs))] sm:col-span-1 sm:mx-0 sm:w-auto'
 									: ''
@@ -109,16 +62,6 @@ import { lineup } from '../data/lineup';
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — abanico (rotación alternada izquierda/derecha +
-	// acomodo con `back.out`) en vez de un fade+rise plano, para conservar algo
-	// del espíritu "mazo de cartas" de la opción de carrusel que se descartó
-	// (ver comentario del frontmatter). Mismo lenguaje de entrada que
-	// Emprendedores.astro.
-	//
-	// Andamiaje compartido (Loader, IntersectionObserver, import() diferido de
-	// GSAP, matchMedia) en src/scripts/reveal.ts — el immediateRender de los
-	// .from() que empujaba las tarjetas rotadas fuera del viewport está
-	// contenido por `overflow-x-clip` en el <section>.
 	import { onSectionReveal } from '../scripts/reveal';
 
 	onSectionReveal('#bandas', ({ gsap, section, reduceMotion }) => {

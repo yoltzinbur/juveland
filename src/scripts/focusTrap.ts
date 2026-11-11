@@ -1,13 +1,7 @@
-// Trampa de foco reusable para los overlays modales del sitio (el menú móvil
-// de Navbar.astro y el InfoSheet). Sin esto, un usuario de teclado tabula
-// "detrás" del backdrop mientras el diálogo está abierto, y al cerrar el foco
-// se queda perdido en medio de la página en vez de volver al botón que lo
-// abrió — las dos cosas que `role="dialog"` + `aria-modal` prometen pero que
-// el navegador no hace solo.
-//
-// Mantiene el patrón ya existente: Escape y el botón "atrás" del teléfono los
-// siguen manejando los propios componentes (pushState/popstate); esto solo
-// añade el ciclo de foco.
+// Trampa de foco para los diálogos modales (menú móvil e InfoSheet).
+// `aria-modal` no impide que el teclado salga del diálogo ni devuelve el foco
+// al cerrar; esto se encarga de ambas cosas. Escape y el botón "atrás" los
+// maneja cada componente.
 const FOCUSABLE = [
 	'a[href]',
 	'button:not([disabled])',
@@ -56,8 +50,6 @@ export function createFocusTrap(container: HTMLElement): FocusTrap {
 		activate() {
 			previouslyFocused = document.activeElement as HTMLElement | null;
 			document.addEventListener('keydown', onKeydown, true);
-			// El primer enfocable suele ser el botón de cerrar / el primer link,
-			// que es a dónde un lector de pantalla espera aterrizar al abrir.
 			const items = focusable();
 			(items[0] ?? container).focus();
 		},

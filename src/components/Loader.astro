@@ -1,42 +1,10 @@
 ---
-// Loader — PLAN.md Pasada 1, paso 3 / DESIGN.md §6-7.
-// Overlay cream a pantalla completa con un crossfade + leve escala entre el
-// logo de IMJUVE y el de Jilotepec Pueblo Mágico (DESIGN.md §7: "no es un morph
-// de paths — un crossfade con leve escala se ve casi igual de pulido"). Por eso
-// los dos logos viven apilados en la misma celda de un grid.
+// Crossfade entre los logos de IMJUVE y Pueblo Mágico, hecho solo con CSS: es
+// lo primero que se pinta y no vale la pena cargar GSAP para eso.
 //
-// El crossfade y el fundido de salida son CSS puro (antes GSAP): el Loader es
-// lo PRIMERO que se pinta, así que arrastrar ~113KB de GSAP al primer frame por
-// una animación decorativa iba en contra de la prioridad #1 del sitio (cargar
-// rápido en celular mediano). Ahora GSAP es 100% diferido en todo el sitio.
-//   · Crossfade: `@keyframes loader-cross`, el logo de Pueblo Mágico desfasado
-//     media vuelta (`animation-delay: -2.2s`) para que uno esté a opacidad 0
-//     mientras el otro está a 1. Con `prefers-reduced-motion: reduce` no se
-//     aplica ninguna animación y queda el logo de IMJUVE fijo y legible.
-//   · Salida: `transition: opacity` en `#loader` (0.15s con reduced-motion),
-//     y `display:none` en `transitionend` con un salvavidas por tiempo.
-//
-// Si el JS nunca carga: el logo de Pueblo Mágico ya sale con `opacity-0` como
-// clase estática, así que sin JS se ve un único logo de IMJUVE legible en vez
-// de dos encimados. El overlay se quedaría visible (sin JS que lo oculte), pero
-// el `<slot>` de la página vive debajo y la animación de secciones degrada sola.
-//
-// El script tiene un tope MÁXIMO de espera (`MAX_WAIT_MS`, conexiones lentas) y
-// un mínimo (`MIN_VISIBLE_MS`) para que en cargas rápidas no desaparezca antes
-// de que se alcance a ver. En visitas repetidas (flag en localStorage) solo se
-// acorta, no se salta.
-//
-// El Hero estampa "JUVELAND" letra por letra y las islas de sección tienen
-// entradas con ScrollTrigger que ya nacen por encima de su línea de disparo:
-// mientras este overlay (z-[100]) las tapa, esas animaciones pasarían enteras
-// sin que nadie las viera. Por eso `hide()` deja `data-hidden="true"` en el
-// nodo y emite `juveland:loader-hidden` justo al empezar a desvanecerse — la
-// señal que esos scripts esperan (helper `whenLoaderGone` en src/scripts/).
-//
-// `loading="eager"` en los dos logos: son lo primero que se ve, así que el
-// `loading="lazy"` por defecto de <Image> es contraproducente. El audit de
-// Astro marca esto como "unoptimized loading attribute" en imágenes arriba
-// del pliegue.
+// Al empezar a desvanecerse emite `juveland:loader-hidden` (ver
+// `whenLoaderGone`), para que las animaciones de la página no corran mientras
+// el overlay las tapa.
 import { Image } from 'astro:assets';
 import logoImjuve from '../assets/hero/simbolo-imjuve.png';
 import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
@@ -67,17 +35,14 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 		transition: opacity 0.4s ease;
 	}
 
-	/* Crossfade decorativo — solo con movimiento permitido. Sin esto (reduced
-	 * motion o motor sin soporte), el logo de IMJUVE queda fijo y el de Pueblo
-	 * Mágico oculto por su clase estática `opacity-0`. */
+	/* Con reduced-motion queda fijo el logo de IMJUVE; el de Pueblo Mágico ya
+	 * trae `opacity-0` como clase estática. */
 	@media (prefers-reduced-motion: no-preference) {
 		.loader-logo {
 			animation: loader-cross 4.4s ease-in-out infinite;
 		}
 		.loader-logo-pueblo {
-			/* Media vuelta de desfase: arranca a mitad del ciclo (opacidad 0)
-			 * mientras el de IMJUVE arranca a opacidad 1. El delay negativo hace
-			 * que la animación nazca "ya corriendo", sin flash inicial. */
+			/* Desfase de medio ciclo; el delay negativo evita un flash inicial. */
 			animation-delay: -2.2s;
 		}
 	}
@@ -116,13 +81,11 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 		try {
 			localStorage.setItem(STORAGE_KEY, '1');
 		} catch {
-			// Modo privado / storage bloqueado — el loader solo saldrá con la
-			// duración de "primera visita" siempre. Inocuo.
+			// Storage bloqueado: siempre se usa la duración de primera visita.
 		}
 	};
 
-	// Primera visita: 1.3s. Visitas repetidas: más corto, pero no tanto como
-	// para no alcanzar a ver el crossfade.
+	// Mínimo para que el loader alcance a verse; en visitas repetidas es más corto.
 	const MIN_VISIBLE_MS = readSeen() ? 900 : 1300;
 	const MAX_WAIT_MS = 4000;
 
@@ -138,10 +101,7 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 			const wait = Math.max(MIN_VISIBLE_MS - (Date.now() - shownAt), 0);
 
 			window.setTimeout(() => {
-				// Señal para Hero.astro y las islas de sección (helper
-				// `whenLoaderGone`): recién ahora que el overlay empieza a irse
-				// tiene sentido que sus entradas se reproduzcan. El flag en
-				// dataset cubre el caso de que un listener se adjunte tarde.
+				// El flag en dataset cubre a los listeners que llegan tarde.
 				loader.dataset.hidden = 'true';
 				window.dispatchEvent(new CustomEvent('juveland:loader-hidden'));
 				markSeen();
@@ -151,8 +111,7 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 					loader.style.display = 'none';
 				};
 				loader.addEventListener('transitionend', done, { once: true });
-				// Salvavidas: si `transitionend` no dispara (opacidad ya en 0,
-				// motor sin transiciones), ocultar igual pasado su tiempo.
+				// Por si `transitionend` nunca dispara.
 				window.setTimeout(done, 600);
 			}, wait);
 		};
@@ -162,10 +121,8 @@ import logoPuebloMagico from '../assets/hero/simbolo-pueblo-magico.png';
 				? Promise.resolve()
 				: new Promise<void>((resolve) => window.addEventListener('load', () => resolve()));
 
-		// Se espera tanto a que cargue la página como a que las fuentes estén
-		// listas (la misma señal que usa Hero.astro para dividir "JUVELAND").
 		Promise.all([pageLoaded, document.fonts.ready]).then(hide);
-		// Tope de seguridad — nunca deja al usuario atorado más de 4s.
+		// En conexiones lentas, nunca más de 4 s.
 		window.setTimeout(hide, MAX_WAIT_MS);
 	}
 </script>

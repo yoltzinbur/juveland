@@ -1,8 +1,6 @@
 ---
-// Íconos de línea para Chips.astro — trazo simple (stroke, sin relleno) porque
-// el contorno "ink" grueso ya lo aporta el círculo de fondo; el ícono solo
-// necesita leerse limpio adentro. `class` se pasa completo desde el caller
-// (stroke-cream / stroke-ink) para no romper el escaneo estático de Tailwind.
+// Íconos de línea para Chips.astro. `class` se pasa completo (stroke-cream /
+// stroke-ink) para que Tailwind detecte la clase.
 interface Props {
 	name: 'arte' | 'musica' | 'emprendimiento' | 'expresion' | 'convivencia';
 	class?: string;

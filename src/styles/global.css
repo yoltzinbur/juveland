@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-	/* Colores — DESIGN.md §3, sampleados del cartel oficial IMJUVE */
+	/* Colores muestreados del cartel oficial */
 	--color-red: #e32117;
 	--color-blue: #1baae2;
 	--color-purple: #8e1884;
@@ -11,24 +11,20 @@
 	--color-cream: #faf9f7;
 	--color-ink: #14110f;
 
-	/* Tipografía — DESIGN.md §4 (cssVariable inyectada por <Font> en Layout.astro) */
+	/* Las variables las inyecta <Font> en Layout.astro */
 	--font-display: var(--font-fredoka);
 	--font-headline: var(--font-baloo-2);
 	--font-body: var(--font-nunito);
 
-	/* Radios — DESIGN.md §2 */
 	--radius-chip: 999px;
 	--radius-card: 20px;
 	--radius-button: 16px;
 
-	/* Punto de corte a medida del Hero — abajo de 830px el cluster de la
-	 * esquina (insignia + mascota + fecha) se encima con las letras de
-	 * JUVELAND, así que ese ancho alterna entre el layout tipo chip y el de
-	 * escritorio. Tailwind v4 genera la variante `hero:` a partir de este
-	 * token; antes esto era `min-[830px]:` repetido ~8 veces en Hero.astro. */
+	/* Genera la variante `hero:`. Por debajo de 830px el grupo de la esquina
+	 * del Hero se encima con el título. */
 	--breakpoint-hero: 830px;
 
-	/* Espaciado — DESIGN.md (frontmatter), se suma a la escala numérica de Tailwind */
+	/* Se suma a la escala numérica de Tailwind */
 	--spacing-xs: 8px;
 	--spacing-sm: 16px;
 	--spacing-md: 24px;
@@ -37,9 +33,8 @@
 }
 
 /*
- * Sistema "sticker, no glass" — DESIGN.md §5.
- * Sombra sólida sin blur ni transparencia, contorno grueso tipo cómic.
- * Dos pesos de cada uno según el tamaño del elemento (chip/botón chico vs. tarjeta/contenedor grande).
+ * "Sticker, no glass": sombra sólida sin blur y contorno grueso.
+ * Versión normal para tarjetas y `-sm` / delgada para chips y botones.
  */
 @utility sticker-shadow {
 	box-shadow: 4px 4px 0 0 var(--color-ink);
@@ -61,14 +56,8 @@
 	border-color: var(--color-ink);
 }
 
-/*
- * Variantes invertidas — para stickers que viven sobre una banda `bg-ink`
- * (Bandas/Line-up, y probablemente el footer, DESIGN.md §6: "banda ink o
- * cream"). El contorno/sombra normal usa `ink` porque el fondo de página es
- * `cream`; sobre un fondo `ink` esa misma línea/sombra se vuelve invisible
- * (ink sobre ink), así que aquí se invierte a `cream` — mismo lenguaje de
- * sticker, solo con el rol de color al revés.
- */
+/* Variantes en `cream` para elementos sobre fondo `ink`, donde el contorno
+ * normal no se vería. */
 @utility cream-outline {
 	border-style: solid;
 	border-width: 2px;
@@ -84,10 +73,7 @@
 }
 
 @layer base {
-	/* El navbar es `sticky top-4` (~5rem de alto con el gap): sin esto el salto
-	 * a una sección (#ancla, menú y links de escritorio) deja el encabezado
-	 * debajo de la píldora. `scrollIntoView` y los anclas nativos respetan
-	 * este padding del contenedor de scroll. */
+	/* Para que los saltos a una sección no queden debajo de la navbar sticky. */
 	html {
 		scroll-padding-top: 6rem;
 	}

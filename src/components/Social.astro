@@ -1,11 +1,6 @@
 ---
-// Síguenos — PLAN.md Pasada 1, paso 9 / DESIGN.md §6.
-// DESIGN.md ofrecía dos caminos: tira de posts reales de Instagram (requiere
-// API) o, si no da tiempo, tarjetas estáticas + botón de síguenos. Con las 4
-// cuentas reales que mandó el usuario (2 IMJUVE, 2 Jilotepec/Turismo) se
-// construye la segunda opción — enlaces reales y honestos, sin inventar
-// capturas de posts que no tenemos ni fabricar contenido de esas cuentas.
-// Datos en src/data/social.ts — compartidos con Footer.astro (paso 12).
+// Tarjetas estáticas con enlace a cada cuenta: mostrar posts reales requeriría
+// la API de Instagram.
 import SocialIcon from './SocialIcon.astro';
 import { socialAccounts as accounts } from '../data/social';
 ---

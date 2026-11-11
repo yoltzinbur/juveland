@@ -1,16 +1,7 @@
 ---
-// Navbar — DESIGN.md §6. Píldora cream sticky, links a las secciones.
-//
-// "Encogerse + más sombra al hacer scroll" (Pasada 2) ahora es CSS puro
-// (`animation-timeline: scroll()`, ver <style> al final) en vez de GSAP +
-// ScrollTrigger: era el único consumidor estático de GSAP junto con el Hero, y
-// ~113KB de JS para encoger una barra no se justifica en la carga inicial de un
-// celular mediano (prioridad #1 del sitio). En navegadores sin soporte de
-// scroll-driven animations la píldora simplemente se queda en su estado de
-// reposo — que ya trae `sticker-shadow-sm`, así que nunca se ve "plana".
-//
-// `loading="eager"` en la mascota: el navbar es sticky y visible desde el
-// primer frame, así que el `loading="lazy"` por defecto de <Image> no aplica.
+// El encogimiento al hacer scroll es CSS (`animation-timeline: scroll()`),
+// no GSAP: no vale la pena cargar ~110 KB de JS para eso. Sin soporte, la
+// barra se queda en su estado de reposo.
 import { Image } from 'astro:assets';
 import mascotaMostaza from '../assets/hero/mascota-mostaza.png';
 import { navLinks } from '../data/nav';
@@ -73,9 +64,6 @@ import { navLinks } from '../data/nav';
 	tabindex="-1"
 	class="ink-outline-thick sticker-shadow fixed inset-x-3 bottom-3 z-50 hidden rounded-card bg-cream p-md md:hidden"
 >
-	{/* Sin CTA "Regístrate" aquí: mientras no exista el form de IMJUVE el registro
-	   es por WhatsApp desde la sección Territorio Emprende, ya enlazada en la
-	   lista de arriba — un botón aparte solo duplicaría ese link. */}
 	<ul class="flex flex-col gap-xs font-headline text-lg font-semibold text-ink uppercase">
 		{
 			navLinks.map((link) => (
@@ -97,15 +85,10 @@ import { navLinks } from '../data/nav';
 	const backdrop = document.getElementById('nav-backdrop');
 	const sheetLinks = document.querySelectorAll('.nav-sheet-link');
 
-	// Trampa de foco: sin esto un usuario de teclado tabula "detrás" del
-	// backdrop con el menú abierto, y al cerrar el foco se queda perdido en la
-	// página en vez de volver al botón que lo abrió.
 	const trap = sheet ? createFocusTrap(sheet) : null;
 
-	// El botón "atrás" del teléfono cierra el menú en vez de salir de la página
-	// (SPA de una sola URL): al abrir se mete una entrada de historial y se
-	// escucha `popstate`; al cerrar por acción del usuario se deshace con
-	// `history.back()`.
+	// El botón "atrás" del teléfono cierra el menú en vez de salir del sitio
+	// (ver InfoSheet.astro).
 	function onPopState() {
 		closeSheet({ fromPopState: true });
 	}
@@ -142,14 +125,10 @@ import { navLinks } from '../data/nav';
 
 	backdrop?.addEventListener('click', () => closeSheet());
 
-	// Los links del menú saltan a una sección (#ancla). NO se cierra con
-	// history.back(): al volver atrás el navegador restaura la posición de
-	// scroll previa *después* del popstate, pisando el salto al ancla. En su
-	// lugar se reemplaza la entrada del menú por la de la sección y se hace el
-	// scroll a mano: el historial queda [página] → [#sección] y un solo
-	// "atrás" regresa a esa entrada sin re-saltar (Layout fija
-	// `history.scrollRestoration = 'manual'`, así que back / forward ya no
-	// mueven el viewport por su cuenta).
+	// Al elegir un link no se cierra con history.back(): el navegador
+	// restauraría el scroll anterior después del popstate y anularía el salto
+	// al ancla. Se reemplaza la entrada del menú por la de la sección y el
+	// scroll se hace a mano.
 	sheetLinks.forEach((link) =>
 		link.addEventListener('click', (event) => {
 			const href = link.getAttribute('href');
@@ -174,14 +153,9 @@ import { navLinks } from '../data/nav';
 </script>
 
 <style>
-	/* Pasada 2 (PLAN.md) — "encoger + sombra sticker al hacer scroll", en CSS
-	 * scroll-driven en vez de GSAP. En reposo arriba del todo la píldora ya
-	 * trae `sticker-shadow-sm` (3px) por su clase; al bajar los primeros 64px
-	 * se encoge levemente y la sombra crece al offset completo de
-	 * `sticker-shadow` (4px), como si el contenido pasara por debajo y la
-	 * "levantara". Vuelve sola al llegar arriba. Es una animación ligada al
-	 * scroll (no autónoma), así que se mantiene también con reduced-motion —
-	 * igual que hacía la versión con GSAP. */
+	/* En los primeros 64px de scroll la barra se encoge y la sombra crece.
+	 * Se mantiene con reduced-motion porque la controla el usuario con el
+	 * scroll, no es una animación autónoma. */
 	@keyframes nav-shrink {
 		to {
 			transform: scale(0.94);

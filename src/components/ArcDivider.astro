@@ -1,32 +1,15 @@
 ---
-// Divisor de sección — cierre en arco cóncavo para el borde inferior de una
-// banda de color de página completa (DESIGN.md §3: "red/blue/purple/lime/
-// orange/green ceden alternando con cream"). Reusable para cualquier banda
-// futura, no solo Trueque con Huella.
+// Arco cóncavo que cierra una banda de color de ancho completo.
+// El relleno y el trazo van en paths separados para que el contorno solo
+// aparezca sobre la curva. `non-scaling-stroke` mantiene el grosor aunque
+// `preserveAspectRatio="none"` estire el SVG.
 //
-// Dos capas en el mismo viewBox: un `path` relleno (el "gorro" que cierra la
-// banda — su borde superior es recto e invisible porque continúa el mismo
-// fill del bloque de arriba) y un `path` solo de trazo, únicamente sobre la
-// curva. Así el contorno `ink` se ve como un corte dibujado a mano, no como
-// un rectángulo con esquinas de tinta de más.
+// `fillClass` se pasa completo ("fill-green") porque Tailwind solo detecta
+// clases escritas literalmente.
 //
-// `preserveAspectRatio="none"` estira el ancho libremente en cualquier
-// viewport; el trazo usa `vector-effect="non-scaling-stroke"` para no
-// engordar/adelgazar con ese estiramiento y mantenerse en el mismo grosor
-// que el resto de contornos `ink` del sitio (2-3px).
-//
-// `fillClass` se pasa completo desde el caller (p. ej. "fill-green") por el
-// mismo criterio que Chips.astro: el escáner estático de Tailwind solo
-// detecta clases que aparecen como texto literal en el archivo.
-//
-// El caller SIEMPRE debe agregar un margen negativo chico (`-mt-0.5` si el
-// arco cierra abajo de la banda, `-mb-0.5` si la abre arriba con
-// `rotate-180`) del lado que toca al bloque de color vecino. Sin eso, en
-// ciertas resoluciones el redondeo de sub-píxel del navegador deja una
-// franja de 1px del fondo `cream` de la página asomando entre el SVG y el
-// div — el traslape lo tapa sin que se note (misma tinta encimada), porque
-// esa franja del SVG (justo donde empieza el `path`, antes de que la curva
-// se separe de la base) siempre es relleno sólido, nunca la curva.
+// Quien lo use debe agregar `-mt-0.5` (o `-mb-0.5` con `rotate-180`) del lado
+// que toca la banda: sin ese traslape, el redondeo de sub-píxel deja ver una
+// línea de 1px del fondo.
 interface Props {
 	fillClass: string;
 	class?: string;

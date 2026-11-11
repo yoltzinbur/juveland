@@ -1,6 +1,4 @@
-// Cuentas oficiales de redes — fuente única para Social.astro (paso 9) y
-// Footer.astro (paso 12), mismo criterio que src/data/lineup.ts: evita que
-// las dos listas diverjan si una cuenta cambia.
+// Lo usan Social y Footer.
 export interface SocialAccount {
 	platform: 'instagram' | 'facebook';
 	platformLabel: string;

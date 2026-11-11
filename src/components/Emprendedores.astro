@@ -1,61 +1,20 @@
 ---
-// Emprendedores — muro de logos de los proyectos ya confirmados para Territorio
-// Emprende. Va JUSTO ANTES de la sección de registro (Formulario.astro): sirve
-// de prueba social ("estos ya son parte") que ancla el CTA de al lado
-// ("¿Quieres formar parte?").
+// El `bg-green` va en un div interior y no en el <section>: si no, también
+// pintaría detrás del arco y el corte cóncavo dejaría de verse.
 //
-// Marco: banda `bg-green` de página completa — verde es el color-identidad de
-// Territorio Emprende en DESIGN.md §3 ("tag de 'Territorio Emprende'"), así que
-// vestir con él a los emprendedores + el CTA los liga visualmente. Estructura
-// espejo de Trueque.astro: aquí el ArcDivider abre ARRIBA (rotate-180, entra
-// con curva cóncava desde el cream del Mapa) y el corte de abajo es un borde
-// `ink` recto (border-b-4) hacia Formulario. El `bg-green` va en un div
-// interior, NO en el <section>, por lo mismo que Trueque: si vive en el
-// <section> pinta también el área detrás del arco y el recorte cóncavo del SVG
-// deja de verse (revelaría verde sobre verde).
+// Tarjetas en `cream` y no de colores: cada logo trae su propia paleta y
+// chocaría sobre una tinta saturada. El nombre va en texto aparte porque
+// varios logos no se leen en tamaño chico.
 //
-// Texto en `ink` sobre `green`: mejor contraste WCAG que `cream` — mismo
-// criterio ya documentado en src/data/lineup.ts y usado en Trueque.astro.
-//
-// Tarjetas: `bg-cream` + `ink-outline`/`sticker-shadow-sm` normales (no las
-// variantes `*-invert`, que son solo para bandas `bg-ink`) — sobre verde el
-// contorno y la sombra `ink` sí se ven. Uniformes, sin color rotando como las
-// tarjetas de banda: cada logo trae su propia paleta (y varios, fondo o texto
-// claro) y chocaría sobre una tinta saturada. Mismo criterio que los logos del
-// footer. Cada tarjeta lleva el logo arriba (caja de alto fijo) y el nombre
-// del emprendimiento debajo, en `font-headline` — varios logos son ilegibles
-// en chico, así que el nombre en texto va aparte.
-//
-// El logo va con `object-contain` en una caja de alto fijo: normaliza
-// proporciones muy distintas (wordmark horizontal vs. badge cuadrado) sin
-// recortar. `rounded-lg` discreto en la <Image> — se nota en los logos que son
-// un rectángulo opaco (fredhyloramas, jiloprint, las-botachelas…) y es inocuo
-// en los de fondo transparente. <Image> infiere las dimensiones intrínsecas
-// del ImageMetadata; `widths`+`sizes` porque el slot cambia de ancho al pasar
-// el grid de 2 → 5 columnas.
-//
-// `quality={55}`: varios de los archivos fuente vienen como si fueran fotos
-// (fredhyloramas ~163KB, ropa-aguilar ~104KB) y con la calidad por defecto
-// Astro apenas los baja. Al tamaño al que se muestran, el recorte de calidad
-// no se nota y evita servir 90-140KB por logo en la variante grande — la
-// prioridad #1 del sitio es cargar rápido en celular (DESIGN.md).
-//
-// Animación de entrada (isla propia al final): mismo "abanico" de mazo de
-// cartas que Bandas.astro — las tarjetas entran alternando rotación ±10° con
-// `back.out`. El andamiaje diferido (esperar al Loader, IntersectionObserver,
-// import() de GSAP, matchMedia con reduced-motion) vive en src/scripts/reveal.ts.
+// `quality={55}`: algunos logos vienen exportados como fotos (más de 100 KB)
+// y con la calidad por defecto casi no bajan de peso. A este tamaño la
+// diferencia no se nota.
 import { Image } from 'astro:assets';
 import ArcDivider from './ArcDivider.astro';
 import { emprendedores } from '../data/emprendedores';
 ---
 
-{/* `overflow-x-clip`: la animación de entrada rota las tarjetas ±10° (gsap.from,
-     que se pinta en immediateRender apenas carga la página, antes de que el
-     ScrollTrigger dispare), así que las esquinas giradas asoman por el borde
-     derecho y aparece scroll horizontal en móvil hasta que la animación
-     termina. `clip` lo contiene sin crear un contenedor de scroll ni afectar
-     el eje vertical (a diferencia de `overflow-hidden`, que recortaría el
-     arco). Mismo criterio que Bandas/Agenda. */}
+{/* `overflow-x-clip`: ver Bandas.astro. */}
 <section id="emprendedores" class="relative overflow-x-clip">
 	<ArcDivider fillClass="fill-green" class="-mb-0.5 h-10 rotate-180 sm:h-16" />
 
@@ -66,14 +25,9 @@ import { emprendedores } from '../data/emprendedores';
 				<p class="font-body text-ink/80 lg:text-lg">Los proyectos que estarán en Territorio Emprende.</p>
 			</div>
 
-			{/* `flex flex-wrap` + `justify-center` en vez de grid: el conteo de
-			    logos no siempre parte exacto (13 → deja 1 suelta a 2 col y 3 en
-			    la última fila a 5 col), y una grilla alinea esas sobrantes a la
-			    izquierda. Con flex-wrap la fila incompleta queda CENTRADA a lo
-			    largo de la fila. El ancho de cada tarjeta imita columnas fijas:
-			    ~50% en móvil, ~20% en `md` (768px, ~135px de slot); el `-Npx`
-			    descuenta el gap (16px base, 24px desde `sm`) y deja 4px de
-			    holgura para que no se desborde una tarjeta y se rompa la fila. */}
+			{/* flex-wrap en vez de grid para que la última fila incompleta quede
+			    centrada. Los anchos simulan 2 y 5 columnas; el `-Npx` descuenta
+			    el gap con un poco de holgura para que la fila no se rompa. */}
 			<div class="flex w-full flex-wrap justify-center gap-sm sm:gap-md">
 				{
 					emprendedores.map((item) => (
@@ -100,12 +54,6 @@ import { emprendedores } from '../data/emprendedores';
 </section>
 
 <script>
-	// Pasada 2 (PLAN.md) — mismo "abanico" (rotación alternada + acomodo con
-	// `back.out`) que Bandas.astro, para que las dos secciones de tarjetas
-	// tengan el mismo lenguaje de entrada. Andamiaje compartido en
-	// src/scripts/reveal.ts; `overflow-x-clip` en el <section> contiene el
-	// immediateRender de los .from() que empujan las tarjetas rotadas fuera del
-	// viewport.
 	import { onSectionReveal } from '../scripts/reveal';
 
 	onSectionReveal('#emprendedores', ({ gsap, section, reduceMotion }) => {

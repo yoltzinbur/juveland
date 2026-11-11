@@ -5,21 +5,18 @@ import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
-  // Dominio de despliegue. Hoy es la URL por defecto de Vercel (proyecto
-  // "juveland"); cuando IMJUVE confirme un dominio propio, cambiarlo aquí —
-  // de esto dependen el <link rel=canonical>, las URLs absolutas de Open
-  // Graph/Twitter (Layout.astro) y el sitemap.
+  // Base del canonical, las URLs de Open Graph y el sitemap.
   site: 'https://juveland.vercel.app',
   integrations: [
     sitemap({
-      // /style-guide es una página interna (noindex) — fuera del sitemap.
+      // /style-guide es interna (noindex).
       filter: (page) => !page.includes('/style-guide'),
     }),
   ],
   vite: {
     plugins: [tailwindcss()],
   },
-  // Fuentes autohospedadas (sin request externo a Google Fonts) — DESIGN.md §4
+  // Fuentes autohospedadas: sin requests a Google Fonts en runtime.
   fonts: [
     {
       provider: fontProviders.google(),
